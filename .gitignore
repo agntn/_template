@@ -3,7 +3,9 @@ dist
 *.tgz
 *.log
 .DS_Store
-.env*
+.env
+.env.local
+.env.*.local
 .agents
 .claude
 .sisyphus
