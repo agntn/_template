@@ -1,0 +1,16 @@
+import { tool } from "ai";
+import { z } from "zod";
+import { version } from "./version.ts";
+
+export const helloTool = tool({
+  description: "Say hello and return the package version.",
+  inputSchema: z.object({
+    name: z.string().optional().describe("Name to greet"),
+  }),
+  execute: async ({ name }) => {
+    return {
+      message: `Hello, ${name || "world"}!`,
+      version,
+    };
+  },
+});
