@@ -2,9 +2,13 @@
 
 Keep AGENTS.md updated with project status.
 
+## Status
+
+- Node.js 26 development/release baseline with Node.js 24 support is complete and verified.
+
 ## Stack
 
-- **Runtime**: Node.js >= 22
+- **Runtime**: Node.js 26 for development and release; >= 24 supported
 - **Language**: TypeScript (strict)
 - **Build**: obuild (zero-config ESM builder)
 - **Test**: vitest
