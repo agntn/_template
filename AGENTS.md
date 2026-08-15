@@ -38,3 +38,7 @@ dist/         - build output (generated)
 - Exports use `.d.mts` / `.mjs` extensions
 - Strict TypeScript (all strict checks enabled)
 - No `as any`, `@ts-ignore`, or `@ts-expect-error`
+
+## Status
+
+- Pull requests and issues use short, freeform descriptions focused on why a change is needed or what went wrong.

@@ -1,9 +1,7 @@
-# Pull Request
+<!--
+What problem does this solve?
 
-## What
+Keep it focused on why the change is needed. The diff already shows what changed.
 
-<!-- What does this change and why. Keep it short — the diff speaks for itself. -->
-
-## Closes
-
-<!-- Link the issue: Closes #123 -->
+Add `Resolves #123` if this resolves an issue.
+-->
