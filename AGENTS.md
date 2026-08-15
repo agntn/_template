@@ -5,6 +5,7 @@ Keep AGENTS.md updated with project status.
 ## Status
 
 - Node.js 26 development/release baseline with Node.js 24 support is complete and verified.
+- Stable TypeScript 7 typechecking and declaration builds are complete and verified.
 
 ## Stack
 
@@ -13,7 +14,7 @@ Keep AGENTS.md updated with project status.
 - **Build**: obuild (zero-config ESM builder)
 - **Test**: vitest
 - **Lint**: oxlint + oxfmt
-- **Typecheck**: tsgo (native TypeScript)
+- **Typecheck**: tsc (native TypeScript 7)
 - **Release**: changelogen
 - **Package manager**: pnpm
 
