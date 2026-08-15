@@ -35,27 +35,26 @@
     "dev": "obuild --stub",
     "lint": "oxlint . && oxfmt --check .",
     "lint:fix": "oxlint . --fix && oxfmt .",
-    "typecheck": "tsgo --noEmit --skipLibCheck",
+    "typecheck": "tsc --noEmit --skipLibCheck",
     "test": "vitest",
     "test:run": "vitest --run",
     "prepack": "pnpm run build",
     "release": "pnpm test:run && pnpm build && changelogen --release --push"
   },
   "dependencies": {
-    "citty": "latest",
-    "consola": "latest"
+    "citty": "^0.2.1",
+    "consola": "^3.4.2"
   },
   "devDependencies": {
-    "@types/node": "latest",
-    "@typescript/native-preview": "latest",
-    "ai": "latest",
-    "changelogen": "latest",
-    "obuild": "latest",
-    "oxfmt": "latest",
-    "oxlint": "latest",
-    "typescript": "latest",
-    "vitest": "latest",
-    "zod": "latest"
+    "@types/node": "^24.0.0",
+    "ai": "^6.0.116",
+    "changelogen": "^0.6.2",
+    "obuild": "^0.4.38",
+    "oxfmt": "^0.36.0",
+    "oxlint": "^1.51.0",
+    "typescript": "^7.0.2",
+    "vitest": "^4.0.18",
+    "zod": "^4.3.6"
   },
   "peerDependencies": {
     "ai": ">=6.0.0",
@@ -70,7 +69,7 @@
     }
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "packageManager": "pnpm@10.30.3"
 }
