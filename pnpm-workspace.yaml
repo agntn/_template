@@ -1,2 +1,4 @@
+gitChecks: false
+
 allowBuilds:
   esbuild: true

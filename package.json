@@ -30,16 +30,19 @@
       "import": "./dist/ai.mjs"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "obuild",
     "dev": "obuild --stub",
     "lint": "oxlint . && oxfmt --check .",
     "lint:fix": "oxlint . --fix && oxfmt .",
     "typecheck": "tsc --noEmit --skipLibCheck",
-    "test": "vitest",
-    "test:run": "vitest --run",
+    "test": "vitest --run",
+    "test:watch": "vitest",
     "prepack": "pnpm run build",
-    "release": "pnpm test:run && pnpm build && changelogen --release --push"
+    "release": "pnpm test && pnpm build && changelogen --release --push"
   },
   "dependencies": {
     "citty": "0.2.2",

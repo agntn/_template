@@ -7,6 +7,7 @@ Keep AGENTS.md updated with project status.
 - Node.js 26 development/release baseline with Node.js 24 support is complete and verified.
 - Stable TypeScript 7 typechecking and declaration builds are complete and verified.
 - Direct dependencies and pnpm are updated to their latest stable releases and verified.
+- npm publishing uses GitHub Actions OIDC trusted publishing without a long-lived registry token.
 
 ## Stack
 
@@ -23,8 +24,8 @@ Keep AGENTS.md updated with project status.
 
 - `pnpm dev` - stub build for development
 - `pnpm build` - production build
-- `pnpm test` - run tests (watch)
-- `pnpm test:run` - run tests (single run)
+- `pnpm test` - run tests once
+- `pnpm test:watch` - run tests in watch mode
 - `pnpm lint` - lint + format check
 - `pnpm fmt` - auto-fix lint + format
 - `pnpm typecheck` - type checking
