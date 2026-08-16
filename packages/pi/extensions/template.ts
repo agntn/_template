@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import type { AgentToolResult, ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
-import type * as TemplateModule from "../../../src/index.ts";
+import type * as TemplateModule from "../../../dist/index.d.mts";
 
 const sourceModuleUrl = new URL("../../../src/index.ts", import.meta.url);
 const distributionModuleUrl = new URL("../../../dist/index.mjs", import.meta.url);
@@ -33,7 +33,7 @@ export default function templateExtension(pi: ExtensionAPI): void {
         description: "Filesystem-safe application name",
         minLength: 1,
         maxLength: 100,
-        pattern: "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+        pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*$",
       }),
     }),
     async execute(_toolCallId, params): Promise<AgentToolResult<TemplateModule.AppPaths>> {

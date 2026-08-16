@@ -39,7 +39,7 @@
     "dev": "obuild --stub",
     "lint": "oxlint . && oxfmt --check .",
     "lint:fix": "oxlint . --fix && oxfmt .",
-    "typecheck": "tsc --noEmit --skipLibCheck && tsc -p tsconfig.extensions.json",
+    "typecheck": "tsc --noEmit --skipLibCheck && pnpm build && tsc -p tsconfig.extensions.json",
     "test": "vitest --run",
     "test:watch": "vitest",
     "prepack": "pnpm run build",
@@ -63,9 +63,9 @@
     "zod": "4.4.3"
   },
   "peerDependencies": {
-    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-coding-agent": ">=0.84.2 <1",
     "ai": ">=7.0.0",
-    "typebox": "*",
+    "typebox": ">=1.3.14 <2",
     "zod": ">=4.0.0"
   },
   "peerDependenciesMeta": {
@@ -73,9 +73,6 @@
       "optional": true
     },
     "ai": {
-      "optional": true
-    },
-    "typebox": {
       "optional": true
     },
     "zod": {
