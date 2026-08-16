@@ -6,6 +6,7 @@ Keep AGENTS.md updated with project status.
 
 - Node.js 26 development/release baseline with Node.js 24 support is complete and verified.
 - Stable TypeScript 7 typechecking and declaration builds are complete and verified.
+- Direct dependencies and pnpm are updated to their latest stable releases and verified.
 
 ## Stack
 
