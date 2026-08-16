@@ -8,6 +8,7 @@ Keep AGENTS.md updated with project status.
 - Stable TypeScript 7 typechecking and declaration builds are complete and verified.
 - Direct dependencies and pnpm are updated to their latest stable releases and verified.
 - npm publishing uses GitHub Actions OIDC trusted publishing without a long-lived registry token.
+- A publishable Pi extension template with isolated typechecking is complete and verified.
 
 ## Stack
 
@@ -34,9 +35,10 @@ Keep AGENTS.md updated with project status.
 ## Structure
 
 ```
-src/          - source code
-test/         - tests
-dist/         - build output (generated)
+src/                    - source code
+test/                   - tests
+packages/pi/extensions/ - Pi extension sources shipped with the package
+dist/                   - build output (generated)
 ```
 
 ## Conventions
