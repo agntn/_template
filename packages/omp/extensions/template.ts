@@ -1,0 +1,54 @@
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+import type { AgentToolResult, ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
+
+import type * as TemplateModule from "../../../dist/index.d.mts";
+
+const sourceModuleUrl = new URL("../../../src/index.ts", import.meta.url);
+const distributionModuleUrl = new URL("../../../dist/index.mjs", import.meta.url);
+let templateModulePromise: Promise<typeof TemplateModule> | undefined;
+
+function loadLibrary(): Promise<typeof TemplateModule> {
+  templateModulePromise ??= import(
+    existsSync(fileURLToPath(sourceModuleUrl)) ? sourceModuleUrl.href : distributionModuleUrl.href
+  ) as Promise<typeof TemplateModule>;
+
+  return templateModulePromise;
+}
+
+export default function templateExtension(pi: ExtensionAPI): void {
+  // OMP validates tool parameters with its own TypeBox build, so schemas must
+  // come from the host-injected facade rather than a standalone typebox import.
+  const { Type } = pi.typebox;
+  pi.setLabel("Template");
+
+  pi.registerTool({
+    name: "template_paths",
+    label: "Template Paths",
+    description: "Resolve platform-standard config, data, and cache directories for an application",
+    parameters: Type.Object({
+      appName: Type.String({
+        description: "Filesystem-safe application name",
+        minLength: 1,
+        maxLength: 100,
+        pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+      }),
+    }),
+    approval: "read",
+    async execute(_toolCallId, params): Promise<AgentToolResult<TemplateModule.AppPaths>> {
+      const { resolveAppPaths } = await loadLibrary();
+      const paths = resolveAppPaths(params.appName);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Config: ${paths.config}\nData: ${paths.data}\nCache: ${paths.cache}`,
+          },
+        ],
+        details: paths,
+      };
+    },
+  });
+}
