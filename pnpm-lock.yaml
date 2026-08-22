@@ -18,6 +18,9 @@ importers:
       '@earendil-works/pi-coding-agent':
         specifier: 0.84.2
         version: 0.84.2(ws@8.21.3)(zod@4.4.3)
+      '@oh-my-pi/omptype':
+        specifier: 18.0.0
+        version: 18.0.0
       '@oh-my-pi/pi-coding-agent':
         specifier: 18.0.0
         version: 18.0.0
