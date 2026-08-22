@@ -54,6 +54,8 @@ describe("sanitizeTerminalText", () => {
     const clean = sanitizeTerminalText(hostile);
 
     expect(clean).not.toMatch(CONTROL_BYTES);
+    expect(clean).not.toContain("evil");
+    expect(clean).not.toContain("31m");
     expect(clean).toContain("safe");
     expect(clean).toContain("end");
   });
