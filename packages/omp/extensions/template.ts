@@ -8,13 +8,14 @@ import { renderStatusLine } from "@oh-my-pi/pi-coding-agent/tui";
 
 import type * as TemplateModule from "../../../dist/index.d.mts";
 
-const sourceModuleUrl = new URL("../../../src/index.ts", import.meta.url);
-const distributionModuleUrl = new URL("../../../dist/index.mjs", import.meta.url);
+const sourceModulePath = fileURLToPath(new URL("../../../src/index.ts", import.meta.url));
 let templateModulePromise: Promise<typeof TemplateModule> | undefined;
 
 function loadLibrary(): Promise<typeof TemplateModule> {
-  templateModulePromise ??= import(
-    existsSync(fileURLToPath(sourceModuleUrl)) ? sourceModuleUrl.href : distributionModuleUrl.href
+  templateModulePromise ??= (
+    existsSync(sourceModulePath)
+      ? import("../../../src/index.ts")
+      : import("../../../dist/index.mjs")
   ) as Promise<typeof TemplateModule>;
 
   return templateModulePromise;
