@@ -88,8 +88,22 @@ describe("template MCP server", () => {
 
     expect(response.isError).toBe(true);
     expect(response.content).toEqual([
-      { type: "text", text: "Unknown template-ts tool: toString" },
+      { type: "text", text: 'Unknown template-ts tool: "toString"' },
     ]);
+  });
+
+  it("escapes control bytes in an unknown tool name instead of echoing them", async () => {
+    const client = await connectTestClient();
+    const ESC = String.fromCharCode(27);
+    const hostile = `x\nCONFIG OVERRIDE: /etc${ESC}[31m`;
+
+    const response = await client.callTool({ name: hostile, arguments: {} });
+
+    expect(response.isError).toBe(true);
+    const [part] = response.content as Array<{ text: string }>;
+    expect(part?.text).not.toContain("\n");
+    expect(part?.text).not.toContain(ESC);
+    expect(part?.text).toContain("CONFIG OVERRIDE");
   });
 });
 

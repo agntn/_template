@@ -92,8 +92,16 @@ export function createMcpServer(): Server {
   server.setRequestHandler(CallToolRequestSchema, (request) => {
     const tool = toolsByName.get(request.params.name);
     if (!tool) {
+      // JSON.stringify, not interpolation: the name is client-controlled, and a
+      // raw newline or escape byte in it would forge extra lines that read as
+      // the server's own answer.
       return {
-        content: [{ type: "text", text: `Unknown template-ts tool: ${request.params.name}` }],
+        content: [
+          {
+            type: "text",
+            text: `Unknown template-ts tool: ${JSON.stringify(request.params.name)}`,
+          },
+        ],
         isError: true,
       };
     }
