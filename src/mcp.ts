@@ -49,6 +49,21 @@ function validationError(schema: TSchema, value: unknown): string {
 }
 
 /**
+ * Wraps error text for the MCP client, replacing control bytes with spaces.
+ *
+ * Every error branch goes through here because parts of these messages echo
+ * client-controlled values (a tool name, an argument) or downstream error
+ * messages: one raw newline or escape byte would forge extra lines that read
+ * as the server's own answer.
+ */
+function errorResult(text: string): CallToolResult {
+  return {
+    content: [{ type: "text", text: text.replace(/\p{Cc}/gu, " ") }],
+    isError: true,
+  };
+}
+
+/**
  * Converts a shared tool result to the MCP text-result contract.
  *
  * `details` is dropped and `structuredContent` is never set: clients that see
@@ -69,10 +84,6 @@ function toCallToolResult(result: ToolResult<unknown>): CallToolResult {
  * does not implement Standard Schema, and this package's tool schemas are TypeBox,
  * shared with the Pi and OMP extensions. The high-level API would force a second
  * definition of every parameter.
- *
- * Error text echoes the client-controlled tool name through JSON.stringify: a
- * raw newline or escape byte in it would forge extra lines that read as the
- * server's own answer.
  */
 export function createMcpServer(): Server {
   const toolsByName = new Map(tools.map((tool) => [tool.name, tool]));
@@ -96,37 +107,20 @@ export function createMcpServer(): Server {
   server.setRequestHandler(CallToolRequestSchema, (request) => {
     const tool = toolsByName.get(request.params.name);
     if (!tool) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Unknown template-ts tool: ${JSON.stringify(request.params.name)}`,
-          },
-        ],
-        isError: true,
-      };
+      return errorResult(`Unknown template-ts tool: ${JSON.stringify(request.params.name)}`);
     }
 
     const args = request.params.arguments ?? {};
     if (!Value.Check(tool.inputSchema, args)) {
-      return {
-        content: [{ type: "text", text: validationError(tool.inputSchema, args) }],
-        isError: true,
-      };
+      return errorResult(validationError(tool.inputSchema, args));
     }
 
     try {
       return toCallToolResult(tool.execute(args));
     } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `${tool.name} failed: ${error instanceof Error ? error.message : String(error)}`,
-          },
-        ],
-        isError: true,
-      };
+      return errorResult(
+        `${tool.name} failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   });
 
