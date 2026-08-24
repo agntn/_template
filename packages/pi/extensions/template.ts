@@ -4,18 +4,22 @@ import { fileURLToPath } from "node:url";
 import type { AgentToolResult, ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
-import type * as TemplateModule from "../../../dist/index.d.mts";
+import type * as TemplateTools from "../../../dist/tool-operations.d.mts";
 
-const sourceModuleUrl = new URL("../../../src/index.ts", import.meta.url);
-const distributionModuleUrl = new URL("../../../dist/index.mjs", import.meta.url);
-let templateModulePromise: Promise<typeof TemplateModule> | undefined;
+const sourceModuleUrl = new URL("../../../src/tool-operations.ts", import.meta.url);
+const distributionModuleUrl = new URL("../../../dist/tool-operations.mjs", import.meta.url);
+let toolOperationsPromise: Promise<typeof TemplateTools> | undefined;
 
-function loadLibrary(): Promise<typeof TemplateModule> {
-  templateModulePromise ??= import(
+/**
+ * Loads the tool executors shared with the MCP server and the OMP extension,
+ * so the tool answers stay identical across surfaces.
+ */
+function loadToolOperations(): Promise<typeof TemplateTools> {
+  toolOperationsPromise ??= import(
     existsSync(fileURLToPath(sourceModuleUrl)) ? sourceModuleUrl.href : distributionModuleUrl.href
-  ) as Promise<typeof TemplateModule>;
+  ) as Promise<typeof TemplateTools>;
 
-  return templateModulePromise;
+  return toolOperationsPromise;
 }
 
 export default function templateExtension(pi: ExtensionAPI): void {
@@ -36,19 +40,13 @@ export default function templateExtension(pi: ExtensionAPI): void {
         pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*$",
       }),
     }),
-    async execute(_toolCallId, params): Promise<AgentToolResult<TemplateModule.AppPaths>> {
-      const { resolveAppPaths } = await loadLibrary();
-      const paths = resolveAppPaths(params.appName);
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Config: ${paths.config}\nData: ${paths.data}\nCache: ${paths.cache}`,
-          },
-        ],
-        details: paths,
-      };
+    async execute(
+      _toolCallId,
+      params,
+    ): Promise<AgentToolResult<TemplateTools.AppPaths | TemplateTools.PathsFailure>> {
+      const { templatePaths } = await loadToolOperations();
+      const { content, details } = templatePaths(params.appName);
+      return { content, details };
     },
   });
 }
