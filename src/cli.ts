@@ -11,6 +11,7 @@ const main = defineCommand({
   },
   subCommands: {
     hello: () => import("./commands/hello.ts").then((m) => m.default),
+    mcp: () => import("./commands/mcp.ts").then((m) => m.default),
   },
 });
 

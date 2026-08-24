@@ -23,6 +23,7 @@ vi.mock("@oh-my-pi/pi-coding-agent/tui", () => ({
 }));
 
 import templateExtension, { sanitizeTerminalText } from "../packages/omp/extensions/template.ts";
+import { APP_NAME_MAX_LENGTH, APP_NAME_PATTERN } from "../src/tool-operations.ts";
 
 const CONTROL_BYTES = /[\u0000-\u001F\u007F-\u009F]/;
 const theme = {} as unknown as Theme;
@@ -72,6 +73,20 @@ describe("omp template extension", () => {
     expect(tool.name).toBe("template_paths");
     expect(tool.label).toBe("Template Paths");
     expect(tool.approval).toBe("read");
+  });
+
+  it("keeps the restated schema aligned with the executor's name contract", () => {
+    const tool = registerTemplateTool();
+    const accepts = (value: unknown): boolean =>
+      (tool.parameters as unknown as typebox.TSchema).safeParse(value).success;
+    const longest = "a".repeat(APP_NAME_MAX_LENGTH);
+
+    // The parameters are declared before the executor can be loaded, so the
+    // restated pattern and length have to match what the executor enforces.
+    expect(new RegExp(APP_NAME_PATTERN).test(longest)).toBe(true);
+    expect(accepts({ appName: longest })).toBe(true);
+    expect(accepts({ appName: `${longest}a` })).toBe(false);
+    expect(accepts({ appName: "my.app" })).toBe(false);
   });
 
   it("executes against the library and returns structured details", async () => {

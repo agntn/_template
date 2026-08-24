@@ -6,19 +6,25 @@ import type { AgentToolResult, ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 import { Text } from "@oh-my-pi/pi-coding-agent";
 import { renderStatusLine } from "@oh-my-pi/pi-coding-agent/tui";
 
-import type * as TemplateModule from "../../../dist/index.d.mts";
+import type * as TemplateTools from "../../../dist/tool-operations.d.mts";
 
-const sourceModulePath = fileURLToPath(new URL("../../../src/index.ts", import.meta.url));
-let templateModulePromise: Promise<typeof TemplateModule> | undefined;
+const sourceModulePath = fileURLToPath(new URL("../../../src/tool-operations.ts", import.meta.url));
+let toolOperationsPromise: Promise<typeof TemplateTools> | undefined;
 
-function loadLibrary(): Promise<typeof TemplateModule> {
-  templateModulePromise ??= (
+/**
+ * Loads the tool executors shared with the MCP server and the Pi extension,
+ * so the tool answers stay identical across surfaces. Both specifiers stay
+ * literal on purpose: OMP's compiled loader rewrites bare dependencies only
+ * for imports it can see statically.
+ */
+function loadToolOperations(): Promise<typeof TemplateTools> {
+  toolOperationsPromise ??= (
     existsSync(sourceModulePath)
-      ? import("../../../src/index.ts")
-      : import("../../../dist/index.mjs")
-  ) as Promise<typeof TemplateModule>;
+      ? import("../../../src/tool-operations.ts")
+      : import("../../../dist/tool-operations.mjs")
+  ) as Promise<typeof TemplateTools>;
 
-  return templateModulePromise;
+  return toolOperationsPromise;
 }
 
 // Renderer interpolations cross the terminal trust boundary: model arguments and
@@ -51,19 +57,13 @@ export default function templateExtension(pi: ExtensionAPI): void {
       }),
     }),
     approval: "read",
-    async execute(_toolCallId, params): Promise<AgentToolResult<TemplateModule.AppPaths>> {
-      const { resolveAppPaths } = await loadLibrary();
-      const paths = resolveAppPaths(params.appName);
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Config: ${paths.config}\nData: ${paths.data}\nCache: ${paths.cache}`,
-          },
-        ],
-        details: paths,
-      };
+    async execute(
+      _toolCallId,
+      params,
+    ): Promise<AgentToolResult<TemplateTools.AppPaths | TemplateTools.PathsFailure>> {
+      const { templatePaths } = await loadToolOperations();
+      const { content, details } = templatePaths(params.appName);
+      return { content, details };
     },
     renderCall(args, options, theme) {
       const icon = options.isPartial
@@ -88,6 +88,7 @@ export default function templateExtension(pi: ExtensionAPI): void {
     },
     renderResult(result, _options, theme) {
       const paths = result.details;
+      const resolved = paths && "config" in paths ? paths : undefined;
 
       return new Text(
         renderStatusLine(
@@ -95,11 +96,11 @@ export default function templateExtension(pi: ExtensionAPI): void {
             icon: result.isError ? "error" : "done",
             title: "Template Paths",
             badge: { label: "read", color: "accent" },
-            meta: paths
+            meta: resolved
               ? [
-                  `config ${sanitizeTerminalText(paths.config)}`,
-                  `data ${sanitizeTerminalText(paths.data)}`,
-                  `cache ${sanitizeTerminalText(paths.cache)}`,
+                  `config ${sanitizeTerminalText(resolved.config)}`,
+                  `data ${sanitizeTerminalText(resolved.data)}`,
+                  `cache ${sanitizeTerminalText(resolved.cache)}`,
                 ]
               : undefined,
           },
