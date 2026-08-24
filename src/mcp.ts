@@ -69,6 +69,10 @@ function toCallToolResult(result: ToolResult<unknown>): CallToolResult {
  * does not implement Standard Schema, and this package's tool schemas are TypeBox,
  * shared with the Pi and OMP extensions. The high-level API would force a second
  * definition of every parameter.
+ *
+ * Error text echoes the client-controlled tool name through JSON.stringify: a
+ * raw newline or escape byte in it would forge extra lines that read as the
+ * server's own answer.
  */
 export function createMcpServer(): Server {
   const toolsByName = new Map(tools.map((tool) => [tool.name, tool]));
@@ -92,9 +96,6 @@ export function createMcpServer(): Server {
   server.setRequestHandler(CallToolRequestSchema, (request) => {
     const tool = toolsByName.get(request.params.name);
     if (!tool) {
-      // JSON.stringify, not interpolation: the name is client-controlled, and a
-      // raw newline or escape byte in it would forge extra lines that read as
-      // the server's own answer.
       return {
         content: [
           {

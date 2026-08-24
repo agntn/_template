@@ -1,10 +1,12 @@
 import { defineBuildConfig } from "obuild/config";
 
+/**
+ * One bundle, five inputs: the entries share their chunks and therefore any
+ * module-level state. Separate bundles would each carry their own copy, so
+ * state touched through the package entrypoint would be invisible to the MCP
+ * server (and vice versa).
+ */
 export default defineBuildConfig({
-  // One bundle, five inputs: the entries share their chunks and therefore any
-  // module-level state. Separate bundles would each carry their own copy, so
-  // state touched through the package entrypoint would be invisible to the MCP
-  // server (and vice versa).
   entries: [
     {
       type: "bundle",

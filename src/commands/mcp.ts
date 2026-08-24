@@ -8,11 +8,13 @@ export default defineCommand({
     name: "mcp",
     description: "Run the template MCP server over stdio",
   },
+  /**
+   * stdout carries the JSON-RPC frames. consola's default reporter sends
+   * anything at log level or below to that same descriptor, and `DEBUG` in the
+   * environment raises the level on import, so one stray line would corrupt
+   * the stream. Warnings and errors still reach stderr.
+   */
   async run() {
-    // stdout carries the JSON-RPC frames. consola's default reporter sends
-    // anything at log level or below to that same descriptor, and `DEBUG` in the
-    // environment raises the level on import, so one stray line would corrupt
-    // the stream. Warnings and errors still reach stderr.
     consola.level = LogLevels.warn;
 
     await createMcpServer().connect(new StdioServerTransport());
