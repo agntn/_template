@@ -42,8 +42,8 @@
   "scripts": {
     "build": "obuild",
     "dev": "obuild --stub",
-    "lint": "oxlint . && oxfmt --check .",
-    "lint:fix": "oxlint . --fix && oxfmt .",
+    "lint": "pnpm build && oxlint . && oxfmt --check .",
+    "lint:fix": "pnpm build && oxlint . --fix && oxfmt .",
     "typecheck": "tsc --noEmit --skipLibCheck && pnpm build && tsc -p tsconfig.extensions.json",
     "test": "vitest --run",
     "test:watch": "vitest",
