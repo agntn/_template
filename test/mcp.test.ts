@@ -62,9 +62,8 @@ describe("template MCP server", () => {
     });
 
     expect(response.isError).toBe(true);
-    expect(response.content).toEqual([
-      { type: "text", text: expect.stringContaining("Invalid arguments") },
-    ]);
+    const [part] = response.content as Array<{ text: string }>;
+    expect(part?.text).toContain("Invalid arguments");
   });
 
   it("rejects an app name the pattern forbids", async () => {
@@ -76,9 +75,8 @@ describe("template MCP server", () => {
     });
 
     expect(response.isError).toBe(true);
-    expect(response.content).toEqual([
-      { type: "text", text: expect.stringContaining("Invalid arguments at /appName") },
-    ]);
+    const [part] = response.content as Array<{ text: string }>;
+    expect(part?.text).toContain("Invalid arguments at /appName");
   });
 
   it("rejects prototype property names as unknown tools", async () => {

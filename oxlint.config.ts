@@ -1,0 +1,37 @@
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  options: {
+    typeAware: true,
+  },
+  plugins: ["unicorn", "typescript", "oxc"],
+  rules: {
+    complexity: ["error", { max: 9, variant: "classic" }],
+    eqeqeq: ["error", "always"],
+    "max-depth": ["error", { max: 4 }],
+    "no-constructor-return": "error",
+    "no-loop-func": "error",
+    "no-self-compare": "error",
+    "no-useless-return": "error",
+    "no-warning-comments": "error",
+    "oxc/branches-sharing-code": "error",
+    "typescript/no-mixed-enums": "error",
+    "typescript/no-unsafe-argument": "error",
+    "typescript/no-unsafe-assignment": "error",
+    "typescript/no-unsafe-call": "error",
+    "typescript/no-unsafe-function-type": "error",
+    "typescript/no-unsafe-member-access": "error",
+    "typescript/no-unsafe-return": "error",
+    "unicorn/consistent-assert": "error",
+    "unicorn/escape-case": "error",
+    "unicorn/new-for-builtins": "error",
+    "unicorn/no-immediate-mutation": "error",
+    "unicorn/no-instanceof-array": "error",
+    "unicorn/no-new-buffer": "error",
+    "unicorn/no-unnecessary-array-flat-depth": "error",
+    "unicorn/no-unnecessary-array-splice-count": "error",
+    "unicorn/no-unreadable-iife": "error",
+    "unicorn/no-useless-promise-resolve-reject": "error",
+  },
+  ignorePatterns: [],
+});
