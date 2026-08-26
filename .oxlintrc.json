@@ -1,6 +1,12 @@
 {
   "$schema": "https://unpkg.com/oxlint/configuration_schema.json",
   "plugins": ["unicorn", "typescript", "oxc"],
-  "rules": {},
+  "rules": {
+    "complexity": ["error", { "max": 9, "variant": "classic" }],
+    "oxc/branches-sharing-code": "error",
+    "unicorn/consistent-assert": "error",
+    "eqeqeq": ["error", "always"],
+    "unicorn/escape-case": "error"
+  },
   "ignorePatterns": []
 }

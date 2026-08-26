@@ -50,7 +50,7 @@ function renderedText(component: unknown): string {
 
 describe("sanitizeTerminalText", () => {
   it("strips ANSI, OSC, C0, and C1 sequences", () => {
-    const hostile = "\u001b]0;evil\u0007safe\u001b[31mname\u009b1mtail\u0000end";
+    const hostile = "\u001B]0;evil\u0007safe\u001B[31mname\u009B1mtail\u0000end";
 
     const clean = sanitizeTerminalText(hostile);
 
@@ -109,7 +109,7 @@ describe("omp template extension", () => {
 
   it("sanitizes model arguments in renderCall", () => {
     const tool = registerTemplateTool();
-    const hostile = { appName: "\u001b]0;evil\u0007app\u001b[31mname" };
+    const hostile = { appName: "\u001B]0;evil\u0007app\u001B[31mname" };
 
     const text = renderedText(
       tool.renderCall?.(hostile, { expanded: false, isPartial: false }, theme),
@@ -138,9 +138,9 @@ describe("omp template extension", () => {
     const result = {
       content: [{ type: "text" as const, text: "ok" }],
       details: {
-        config: "/home/user/.config/\u001b]8;;https://evil\u0007app",
+        config: "/home/user/.config/\u001B]8;;https://evil\u0007app",
         data: "/home/user/.local/share/app",
-        cache: "/home/user/.cache/\u009bapp",
+        cache: "/home/user/.cache/\u009Bapp",
       },
     };
 
