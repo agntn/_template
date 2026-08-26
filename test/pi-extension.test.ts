@@ -7,18 +7,18 @@ import templateExtension from "../packages/pi/extensions/template.ts";
 import { APP_NAME_MAX_LENGTH, APP_NAME_PATTERN } from "../src/tool-operations.ts";
 
 interface RegisteredTool {
-  name: string;
-  parameters: TSchema;
+  readonly name: string;
+  readonly parameters: TSchema;
   execute(
     toolCallId: string,
-    params: { appName: string },
+    params: Readonly<{ appName: string }>,
   ): Promise<{ content: Array<{ type: string; text: string }>; details: unknown }>;
 }
 
-function registerTemplateTool(): RegisteredTool {
-  const tools: RegisteredTool[] = [];
+function registerTemplateTool(): Readonly<RegisteredTool> {
+  const tools: Array<Readonly<RegisteredTool>> = [];
   const host = {
-    registerTool: (tool: RegisteredTool) => {
+    registerTool: (tool: Readonly<RegisteredTool>) => {
       tools.push(tool);
     },
   } as unknown as ExtensionAPI;

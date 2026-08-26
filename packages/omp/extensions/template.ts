@@ -16,6 +16,8 @@ let toolOperationsPromise: Promise<typeof TemplateTools> | undefined;
  * so the tool answers stay identical across surfaces. Both specifiers stay
  * literal on purpose: OMP's compiled loader rewrites bare dependencies only
  * for imports it can see statically.
+ *
+ * @returns {Promise<typeof TemplateTools>} Shared tool operations module.
  */
 function loadToolOperations(): Promise<typeof TemplateTools> {
   toolOperationsPromise ??= (
@@ -33,8 +35,8 @@ function loadToolOperations(): Promise<typeof TemplateTools> {
 // first, because hostile JSON is not bound by the declared parameter types.
 export function sanitizeTerminalText(value: unknown): string {
   return stripVTControlCharacters(String(value))
-    .replace(/[\u0000-\u001F\u007F-\u009F]/g, " ")
-    .replace(/ +/g, " ")
+    .replaceAll(/[\u0000-\u001F\u007F-\u009F]/g, " ")
+    .replaceAll(/ +/g, " ")
     .trim();
 }
 

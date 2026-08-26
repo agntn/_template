@@ -92,7 +92,7 @@ describe("template MCP server", () => {
 
   it("escapes control bytes in an unknown tool name instead of echoing them", async () => {
     const client = await connectTestClient();
-    const ESC = String.fromCharCode(27);
+    const ESC = String.fromCodePoint(27);
     const hostile = `x\nCONFIG OVERRIDE: /etc${ESC}[31m`;
 
     const response = await client.callTool({ name: hostile, arguments: {} });

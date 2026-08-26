@@ -29,8 +29,8 @@ const CONTROL_BYTES = /[\u0000-\u001F\u007F-\u009F]/;
 const theme = {} as unknown as Theme;
 const ctx = {} as unknown as ExtensionContext;
 
-function registerTemplateTool(): ToolDefinition {
-  const tools: ToolDefinition[] = [];
+function registerTemplateTool(): Readonly<ToolDefinition> {
+  const tools: Array<Readonly<ToolDefinition>> = [];
   const host = {
     typebox,
     setLabel: () => {},
@@ -41,7 +41,7 @@ function registerTemplateTool(): ToolDefinition {
 
   templateExtension(host);
   expect(tools).toHaveLength(1);
-  return tools[0] as ToolDefinition;
+  return tools[0] as Readonly<ToolDefinition>;
 }
 
 function renderedText(component: unknown): string {

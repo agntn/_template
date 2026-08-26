@@ -13,6 +13,8 @@ let toolOperationsPromise: Promise<typeof TemplateTools> | undefined;
 /**
  * Loads the tool executors shared with the MCP server and the OMP extension,
  * so the tool answers stay identical across surfaces.
+ *
+ * @returns {Promise<typeof TemplateTools>} Shared tool operations module.
  */
 function loadToolOperations(): Promise<typeof TemplateTools> {
   toolOperationsPromise ??= import(

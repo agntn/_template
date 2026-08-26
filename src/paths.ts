@@ -19,9 +19,12 @@ export interface AppPaths {
  *
  * Each path can be overridden via `{APP_NAME_UPPER}_CONFIG_DIR`, `{APP_NAME_UPPER}_DATA_DIR`,
  * or `{APP_NAME_UPPER}_CACHE_DIR` environment variables.
+ *
+ * @param appName - Filesystem-safe application name.
+ * @returns {AppPaths} Platform-standard directories for the application.
  */
 export function resolveAppPaths(appName: string): AppPaths {
-  const envPrefix = appName.toUpperCase().replace(/-/g, "_");
+  const envPrefix = appName.toUpperCase().replaceAll("-", "_");
   const home = homedir();
   const os = platform();
 

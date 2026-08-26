@@ -39,6 +39,7 @@ const appNamePattern = new RegExp(APP_NAME_PATTERN);
  * override variable (`MY.APP_CONFIG_DIR`) a regular shell cannot export.
  *
  * @param appName - Filesystem-safe application name.
+ * @returns {ToolResult<AppPaths | PathsFailure>} Resolved paths or a validation error.
  */
 export function templatePaths(appName: string): ToolResult<AppPaths | PathsFailure> {
   if (appName.length > APP_NAME_MAX_LENGTH || !appNamePattern.test(appName)) {

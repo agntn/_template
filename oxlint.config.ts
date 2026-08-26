@@ -4,7 +4,7 @@ export default defineConfig({
   options: {
     typeAware: true,
   },
-  plugins: ["unicorn", "typescript", "oxc"],
+  plugins: ["jsdoc", "oxc", "typescript", "unicorn"],
   rules: {
     complexity: ["error", { max: 9, variant: "classic" }],
     eqeqeq: ["error", "always"],
@@ -14,7 +14,20 @@ export default defineConfig({
     "no-self-compare": "error",
     "no-useless-return": "error",
     "no-warning-comments": "error",
+    "sort-vars": "error",
+    "symbol-description": "error",
+
+    "jsdoc/require-param": "error",
+    "jsdoc/require-param-description": "error",
+    "jsdoc/require-param-name": "error",
+    "jsdoc/require-returns": "error",
+    "jsdoc/require-returns-description": "error",
+    "jsdoc/require-returns-type": "error",
+    "jsdoc/require-throws-type": "error",
+    "jsdoc/require-yields-type": "error",
+
     "oxc/branches-sharing-code": "error",
+
     "typescript/no-mixed-enums": "error",
     "typescript/no-unsafe-argument": "error",
     "typescript/no-unsafe-assignment": "error",
@@ -22,6 +35,30 @@ export default defineConfig({
     "typescript/no-unsafe-function-type": "error",
     "typescript/no-unsafe-member-access": "error",
     "typescript/no-unsafe-return": "error",
+    "typescript/prefer-includes": "error",
+    "typescript/prefer-nullish-coalescing": ["error", { ignorePrimitives: { string: true } }],
+    "typescript/prefer-readonly-parameter-types": [
+      "error",
+      {
+        allow: [
+          { from: "file", name: "ToolResult" },
+          {
+            from: "package",
+            name: "ExtensionAPI",
+            package: "@earendil-works/pi-coding-agent",
+          },
+          {
+            from: "package",
+            name: ["ExtensionAPI", "ToolDefinition"],
+            package: "@oh-my-pi/pi-coding-agent",
+          },
+        ],
+        ignoreInferredTypes: true,
+      },
+    ],
+    "typescript/prefer-ts-expect-error": "error",
+    "typescript/restrict-plus-operands": "error",
+
     "unicorn/consistent-assert": "error",
     "unicorn/escape-case": "error",
     "unicorn/new-for-builtins": "error",
@@ -32,6 +69,19 @@ export default defineConfig({
     "unicorn/no-unnecessary-array-splice-count": "error",
     "unicorn/no-unreadable-iife": "error",
     "unicorn/no-useless-promise-resolve-reject": "error",
+    "unicorn/prefer-array-flat": "error",
+    "unicorn/prefer-array-some": "error",
+    "unicorn/prefer-at": "error",
+    "unicorn/prefer-blob-reading-methods": "error",
+    "unicorn/prefer-code-point": "error",
+    "unicorn/prefer-date-now": "error",
+    "unicorn/prefer-event-target": "error",
+    "unicorn/prefer-import-meta-properties": "error",
+    "unicorn/prefer-single-call": "error",
+    "unicorn/prefer-string-replace-all": "error",
+    "unicorn/prefer-string-slice": "error",
+    "unicorn/prefer-top-level-await": "error",
+    "unicorn/prefer-type-error": "error",
   },
   ignorePatterns: [],
 });
