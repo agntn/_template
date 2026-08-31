@@ -11,6 +11,7 @@ Keep AGENTS.md updated with project status.
 - A publishable Pi extension template with isolated typechecking is complete and verified.
 - A publishable OMP extension template sharing the isolated typechecking setup is complete and verified.
 - An MCP server template sharing its tool executors with the Pi and OMP extensions is complete and verified.
+- Linting and formatting consume the shared `@agntn/ox` policy.
 
 ## Stack
 
@@ -18,7 +19,7 @@ Keep AGENTS.md updated with project status.
 - **Language**: TypeScript (strict)
 - **Build**: obuild (zero-config ESM builder)
 - **Test**: vitest
-- **Lint**: oxlint + oxfmt
+- **Lint**: oxlint + oxfmt through `@agntn/ox`
 - **Typecheck**: tsc (native TypeScript 7)
 - **Release**: changelogen
 - **Package manager**: pnpm
