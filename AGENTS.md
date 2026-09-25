@@ -48,6 +48,7 @@ dist/                    - build output (generated)
 ## Conventions
 
 - ESM only (`"type": "module"`)
+- Dependency versions live in `pnpm-workspace.yaml` catalogs (`deps`, `dev`); `package.json` points at `catalog:<group>`, and peer ranges stay in `package.json`
 - Exports use `.d.mts` / `.mjs` extensions
 - Strict TypeScript (all strict checks enabled)
 - No `as any`, `@ts-ignore`, or `@ts-expect-error`
