@@ -26,3 +26,27 @@ minimumReleaseAgeExclude:
   - "@oh-my-pi/pi-utils@18.0.0"
   - "@oh-my-pi/pi-wire@18.0.0"
   - "@oh-my-pi/snapcompact@18.0.0"
+
+cleanupUnusedCatalogs: true
+
+catalogs:
+  deps:
+    "@modelcontextprotocol/sdk": 1.30.0
+    citty: 0.2.2
+    consola: 3.4.2
+    typebox: 1.3.14
+  dev:
+    "@agntn/ox": 0.1.0
+    "@earendil-works/pi-coding-agent": 0.84.2
+    "@oh-my-pi/omptype": 18.0.0
+    "@oh-my-pi/pi-coding-agent": 18.0.0
+    "@types/node": 26.2.0
+    ai: 7.0.66
+    changelogen: 0.6.2
+    obuild: 0.4.38
+    oxfmt: 0.63.0
+    oxlint: 1.78.0
+    oxlint-tsgolint: "^7.0.2001"
+    typescript: 7.0.2
+    vitest: 4.1.10
+    zod: 4.4.3
