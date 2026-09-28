@@ -7,8 +7,8 @@ import type {
   ToolDefinition,
 } from "@oh-my-pi/pi-coding-agent";
 
-// The host serves these modules to loaded extensions at runtime; under vitest the
-// renderers are exercised against capturing stand-ins instead of the OMP TUI.
+// Compiled OMP injects only the package root into extensions, so the renderers run
+// against a capturing Text and the TUI barrel must stay off the load path.
 vi.mock("@oh-my-pi/pi-coding-agent", () => ({
   Text: class {
     constructor(
@@ -18,15 +18,21 @@ vi.mock("@oh-my-pi/pi-coding-agent", () => ({
     ) {}
   },
 }));
-vi.mock("@oh-my-pi/pi-coding-agent/tui", () => ({
-  renderStatusLine: (options: unknown) => JSON.stringify(options),
-}));
+vi.mock("@oh-my-pi/pi-coding-agent/tui", () => {
+  throw new Error("The OMP host does not inject the TUI barrel");
+});
 
 import templateExtension, { sanitizeTerminalText } from "../packages/omp/extensions/template.ts";
 import { APP_NAME_MAX_LENGTH, APP_NAME_PATTERN } from "../src/tool-operations.ts";
 
 const CONTROL_BYTES = /[\u0000-\u001F\u007F-\u009F]/;
-const theme = {} as unknown as Theme;
+const theme = {
+  fg: (color: string, text: string) => `${color}(${text})`,
+  styledSymbol: (symbol: string, color: string) => `${color}:${symbol}`,
+  spinnerFrames: ["frame-0", "frame-1"],
+  format: { bracketLeft: "[", bracketRight: "]" },
+  sep: { dot: " | " },
+} as unknown as Theme;
 const ctx = {} as unknown as ExtensionContext;
 
 function registerTemplateTool(): Readonly<ToolDefinition> {
@@ -107,18 +113,37 @@ describe("omp template extension", () => {
     expect(details.cache).toContain("vitest-app");
   });
 
+  it.each([
+    [false, undefined, "success:status.done"],
+    [true, undefined, "muted:status.pending"],
+    [true, 3, "frame-1"],
+  ] as const)(
+    "draws the call status with the host theme (partial=%s, frame=%s)",
+    (isPartial, spinnerFrame, icon) => {
+      const tool = registerTemplateTool();
+
+      const text = renderedText(
+        tool.renderCall?.(
+          { appName: "my-app" },
+          { expanded: false, isPartial, spinnerFrame },
+          theme,
+        ),
+      );
+
+      expect(text).toBe(`${icon} accent(Template Paths): muted(my-app)`);
+    },
+  );
+
   it("sanitizes model arguments in renderCall", () => {
     const tool = registerTemplateTool();
-    const hostile = { appName: "\u001B]0;evil\u0007app\u001B[31mname" };
+    const hostile = { appName: "\u001B]0;evil\u0007app\u001B[31mname\nnext" };
 
     const text = renderedText(
       tool.renderCall?.(hostile, { expanded: false, isPartial: false }, theme),
     );
 
     expect(text).not.toMatch(CONTROL_BYTES);
-    const status = JSON.parse(text) as { icon: string; description: string };
-    expect(status.icon).toBe("done");
-    expect(status.description).toContain("app");
+    expect(text).toBe("success:status.done accent(Template Paths): muted(appname next)");
   });
 
   it("survives a numeric argument that violates the declared schema type", () => {
@@ -128,9 +153,7 @@ describe("omp template extension", () => {
       tool.renderCall?.({ appName: 42 }, { expanded: false, isPartial: true }, theme),
     );
 
-    const status = JSON.parse(text) as { icon: string; description: string };
-    expect(status.icon).toBe("pending");
-    expect(status.description).toBe("42");
+    expect(text).toBe("muted:status.pending accent(Template Paths): muted(42)");
   });
 
   it("sanitizes result data in renderResult and keeps the read badge", () => {
@@ -149,14 +172,9 @@ describe("omp template extension", () => {
     );
 
     expect(text).not.toMatch(CONTROL_BYTES);
-    const status = JSON.parse(text) as {
-      icon: string;
-      badge: { label: string; color: string };
-      meta: string[];
-    };
-    expect(status.icon).toBe("done");
-    expect(status.badge).toEqual({ label: "read", color: "accent" });
-    expect(status.meta.join(" ")).toContain("config");
+    expect(text).toBe(
+      "success:status.done accent(Template Paths) accent([read]) dim(config /home/user/.config/app | data /home/user/.local/share/app | cache /home/user/.cache/ app)",
+    );
   });
 
   it("marks an error result with the error icon and no meta", () => {
@@ -167,8 +185,6 @@ describe("omp template extension", () => {
       tool.renderResult?.(result, { expanded: false, isPartial: false }, theme),
     );
 
-    const status = JSON.parse(text) as { icon: string; meta?: string[] };
-    expect(status.icon).toBe("error");
-    expect(status.meta).toBeUndefined();
+    expect(text).toBe("error:status.error accent(Template Paths) accent([read])");
   });
 });

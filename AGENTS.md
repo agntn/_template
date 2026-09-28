@@ -10,6 +10,7 @@ Keep AGENTS.md updated with project status.
 - npm publishing uses GitHub Actions OIDC trusted publishing without a long-lived registry token.
 - A publishable Pi extension template with isolated typechecking is complete and verified.
 - A publishable OMP extension template sharing the isolated typechecking setup is complete and verified.
+- The OMP extension draws its status line with the host `theme` and imports only the `@oh-my-pi/pi-coding-agent` root at runtime. Compiled OMP injects no `/tui`, so `renderStatusLine` from there stopped the extension loading; the unit test now throws on that import.
 - An MCP server template sharing its tool executors with the Pi and OMP extensions is complete and verified.
 - The CLI keeps citty's colors out of pipes, files and terminals without color support.
 - Linting and formatting consume the shared `@agntn/ox` policy.

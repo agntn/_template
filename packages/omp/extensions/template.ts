@@ -4,7 +4,6 @@ import { stripVTControlCharacters } from "node:util";
 
 import type { AgentToolResult, ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 import { Text } from "@oh-my-pi/pi-coding-agent";
-import { renderStatusLine } from "@oh-my-pi/pi-coding-agent/tui";
 
 import type * as TemplateTools from "../../../dist/tool-operations.d.mts";
 
@@ -67,23 +66,21 @@ export default function templateExtension(pi: ExtensionAPI): void {
       const { content, details } = templatePaths(params.appName);
       return { content, details };
     },
+    // The status line is drawn with the host theme on purpose: compiled OMP injects only the
+    // package root, so a runtime import from `@oh-my-pi/pi-coding-agent/tui` would stop the
+    // whole extension from loading.
     renderCall(args, options, theme) {
       const icon = options.isPartial
         ? options.spinnerFrame === undefined
-          ? "pending"
-          : "running"
-        : "done";
+          ? theme.styledSymbol("status.pending", "muted")
+          : (theme.spinnerFrames[options.spinnerFrame % theme.spinnerFrames.length] ??
+            theme.styledSymbol("status.running", "accent"))
+        : theme.styledSymbol("status.done", "success");
+      const description = sanitizeTerminalText(args.appName);
+      const title = theme.fg("accent", "Template Paths");
 
       return new Text(
-        renderStatusLine(
-          {
-            icon,
-            spinnerFrame: options.spinnerFrame,
-            title: "Template Paths",
-            description: sanitizeTerminalText(args.appName),
-          },
-          theme,
-        ),
+        `${icon} ${title}${description ? `: ${theme.fg("muted", description)}` : ""}`,
         0,
         0,
       );
@@ -91,26 +88,23 @@ export default function templateExtension(pi: ExtensionAPI): void {
     renderResult(result, _options, theme) {
       const paths = result.details;
       const resolved = paths && "config" in paths ? paths : undefined;
+      const icon = result.isError
+        ? theme.styledSymbol("status.error", "error")
+        : theme.styledSymbol("status.done", "success");
+      const { bracketLeft, bracketRight } = theme.format;
+      const badge = theme.fg("accent", `${bracketLeft}read${bracketRight}`);
+      const meta = resolved
+        ? ` ${theme.fg(
+            "dim",
+            [
+              `config ${sanitizeTerminalText(resolved.config)}`,
+              `data ${sanitizeTerminalText(resolved.data)}`,
+              `cache ${sanitizeTerminalText(resolved.cache)}`,
+            ].join(theme.sep.dot),
+          )}`
+        : "";
 
-      return new Text(
-        renderStatusLine(
-          {
-            icon: result.isError ? "error" : "done",
-            title: "Template Paths",
-            badge: { label: "read", color: "accent" },
-            meta: resolved
-              ? [
-                  `config ${sanitizeTerminalText(resolved.config)}`,
-                  `data ${sanitizeTerminalText(resolved.data)}`,
-                  `cache ${sanitizeTerminalText(resolved.cache)}`,
-                ]
-              : undefined,
-          },
-          theme,
-        ),
-        0,
-        0,
-      );
+      return new Text(`${icon} ${theme.fg("accent", "Template Paths")} ${badge}${meta}`, 0, 0);
     },
   });
 }
