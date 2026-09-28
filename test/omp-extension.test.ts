@@ -11,11 +11,11 @@ import type {
 // against a capturing Text and the TUI barrel must stay off the load path.
 vi.mock("@oh-my-pi/pi-coding-agent", () => ({
   Text: class {
-    constructor(
-      readonly text: string,
-      readonly paddingX?: number,
-      readonly paddingY?: number,
-    ) {}
+    readonly text: string;
+
+    constructor(text: string) {
+      this.text = text;
+    }
   },
 }));
 vi.mock("@oh-my-pi/pi-coding-agent/tui", () => {
