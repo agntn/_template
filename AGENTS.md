@@ -12,6 +12,7 @@ Keep AGENTS.md updated with project status.
 - A publishable OMP extension template sharing the isolated typechecking setup is complete and verified.
 - The OMP extension draws its status line with the host `theme` and imports only the `@oh-my-pi/pi-coding-agent` root at runtime. Compiled OMP injects no `/tui`, so `renderStatusLine` from there stopped the extension loading; the unit test now throws on that import.
 - An MCP server template sharing its tool executors with the Pi and OMP extensions is complete and verified.
+- A local MCP server needs a restart, not `pnpm build`: inside a checkout `dist/cli.mjs` loads the `mcp` command from `src/` (see Conventions). `test/cli.test.ts` proves both modes and each guard.
 - The CLI keeps citty's colors out of pipes, files and terminals without color support.
 - Linting and formatting consume the shared `@agntn/ox` policy.
 
@@ -53,6 +54,7 @@ dist/                    - build output (generated)
 - Exports use `.d.mts` / `.mjs` extensions
 - Strict TypeScript (all strict checks enabled)
 - No `as any`, `@ts-ignore`, or `@ts-expect-error`
+- Local MCP from source: `src/cli.ts` imports the `mcp` command from a runtime URL of `src/commands/mcp.ts` when the bin is built, `TEMPLATE_TS_DIST` is not `1`, the path has no `node_modules` segment (Node refuses to strip types there) and the file exists (the npm package ships only `dist`). Otherwise it takes the bundled command. Every runtime import on that path is a `dependency`, so no devDependency guard. Only an edit to `src/cli.ts` itself still needs a build. Relative imports end in `.ts` and `erasableSyntaxOnly` holds, or plain Node cannot run `src/`.
 
 ## Status
 
