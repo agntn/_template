@@ -12,7 +12,7 @@ import {
   type ExtensionContext,
   type ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
-import { onTestFinished } from "vitest";
+import { onTestFinished } from "vite-plus/test";
 
 export interface PiTestHost {
   /** Tools the extension registered, keyed by name. */
