@@ -44,7 +44,7 @@
     "dev": "obuild --stub",
     "lint": "pnpm build && oxlint . && oxfmt --check .",
     "lint:fix": "pnpm build && oxlint . --fix && oxfmt .",
-    "typecheck": "tsc --noEmit --skipLibCheck && pnpm build && tsc -p tsconfig.extensions.json",
+    "typecheck": "tsc --noEmit --skipLibCheck && pnpm build && tsc -p tsconfig.extensions.json && tsc -p test/tsconfig.json",
     "test": "vitest --run",
     "test:watch": "vitest",
     "prepack": "pnpm run build",
