@@ -11,6 +11,7 @@ Keep AGENTS.md updated with project status.
 - A publishable Pi extension template with isolated typechecking is complete and verified.
 - A publishable OMP extension template sharing the isolated typechecking setup is complete and verified.
 - An MCP server template sharing its tool executors with the Pi and OMP extensions is complete and verified.
+- The CLI keeps citty's colors out of pipes, files and terminals without color support.
 - Linting and formatting consume the shared `@agntn/ox` policy.
 
 ## Stack
