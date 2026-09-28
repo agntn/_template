@@ -1,11 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import * as typebox from "@oh-my-pi/omptype/typebox";
-import type {
-  ExtensionAPI,
-  ExtensionContext,
-  Theme,
-  ToolDefinition,
-} from "@oh-my-pi/pi-coding-agent";
+import type * as typebox from "@oh-my-pi/omptype/typebox";
+import type { ToolDefinition } from "@oh-my-pi/pi-coding-agent";
 
 // Compiled OMP injects only the package root into extensions, so the renderers run
 // against a capturing Text and the TUI barrel must stay off the load path.
@@ -24,30 +19,16 @@ vi.mock("@oh-my-pi/pi-coding-agent/tui", () => {
 
 import templateExtension, { sanitizeTerminalText } from "../packages/omp/extensions/template.ts";
 import { APP_NAME_MAX_LENGTH, APP_NAME_PATTERN } from "../src/tool-operations.ts";
+import {
+  ompTestTheme as theme,
+  ompToolContext,
+  registerOmpExtension,
+} from "./fixtures/omp-host.ts";
 
 const CONTROL_BYTES = /[\u0000-\u001F\u007F-\u009F]/;
-const theme = {
-  fg: (color: string, text: string) => `${color}(${text})`,
-  styledSymbol: (symbol: string, color: string) => `${color}:${symbol}`,
-  spinnerFrames: ["frame-0", "frame-1"],
-  format: { bracketLeft: "[", bracketRight: "]" },
-  sep: { dot: " | " },
-} as unknown as Theme;
-const ctx = {} as unknown as ExtensionContext;
 
-function registerTemplateTool(): Readonly<ToolDefinition> {
-  const tools: Array<Readonly<ToolDefinition>> = [];
-  const host = {
-    typebox,
-    setLabel: () => {},
-    registerTool: (tool: ToolDefinition) => {
-      tools.push(tool);
-    },
-  } as unknown as ExtensionAPI;
-
-  templateExtension(host);
-  expect(tools).toHaveLength(1);
-  return tools[0] as Readonly<ToolDefinition>;
+function registerTemplateTool(): ToolDefinition {
+  return registerOmpExtension(templateExtension).tool("template_paths");
 }
 
 function renderedText(component: unknown): string {
@@ -74,8 +55,11 @@ describe("sanitizeTerminalText", () => {
 
 describe("omp template extension", () => {
   it("registers template_paths as a read-approval tool", () => {
-    const tool = registerTemplateTool();
+    const host = registerOmpExtension(templateExtension);
+    const tool = host.tool("template_paths");
 
+    expect([...host.tools.keys()]).toEqual(["template_paths"]);
+    expect(host.labels).toEqual(["Template"]);
     expect(tool.name).toBe("template_paths");
     expect(tool.label).toBe("Template Paths");
     expect(tool.approval).toBe("read");
@@ -103,7 +87,7 @@ describe("omp template extension", () => {
       { appName: "vitest-app" },
       undefined,
       undefined,
-      ctx,
+      ompToolContext,
     );
 
     expect(result.content[0]?.type).toBe("text");

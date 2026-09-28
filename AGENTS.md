@@ -14,6 +14,7 @@ Keep AGENTS.md updated with project status.
 - The OMP extension draws its status line with the host `theme` and imports only the `@oh-my-pi/pi-coding-agent` root at runtime. Compiled OMP injects no `/tui`, so `renderStatusLine` from there stopped the extension loading; the unit test now throws on that import.
 - An MCP server template sharing its tool executors with the Pi and OMP extensions is complete and verified.
 - A local MCP server needs a restart, not `pnpm build`: inside a checkout `dist/cli.mjs` loads the `mcp` command from `src/` (see Conventions). `test/cli.test.ts` proves both modes and each guard.
+- Extension tests go through `test/fixtures/`: Pi's own loader and runner for Pi, a strict OMP host double that throws by name on any member the test did not stub. The OMP package root ships TypeScript inside `node_modules`, so Node cannot load its real loader.
 - The CLI keeps citty's colors out of pipes, files and terminals without color support.
 - Linting and formatting consume the shared `@agntn/ox` policy.
 
@@ -44,6 +45,7 @@ Keep AGENTS.md updated with project status.
 ```
 src/                     - source code
 test/                    - tests
+test/fixtures/           - typed Pi and OMP extension test hosts
 packages/omp/extensions/ - OMP extension sources shipped with the package
 packages/pi/extensions/  - Pi extension sources shipped with the package
 dist/                    - build output (generated)
