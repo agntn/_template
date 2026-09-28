@@ -40,13 +40,13 @@
     "access": "public"
   },
   "scripts": {
-    "build": "obuild",
-    "dev": "obuild --stub",
-    "lint": "pnpm build && oxlint . && oxfmt --check .",
-    "lint:fix": "pnpm build && oxlint . --fix && oxfmt .",
+    "build": "vp pack",
+    "dev": "vp pack --watch",
+    "lint": "pnpm build && vp lint && vp fmt --check",
+    "lint:fix": "pnpm build && vp lint --fix && vp fmt",
     "typecheck": "tsc --noEmit --skipLibCheck && pnpm build && tsc -p tsconfig.extensions.json && tsc -p test/tsconfig.json",
-    "test": "vitest --run",
-    "test:watch": "vitest",
+    "test": "vp test run",
+    "test:watch": "vp test watch",
     "prepack": "pnpm run build",
     "release": "pnpm test && pnpm build && changelogen --release --push"
   },
@@ -64,12 +64,9 @@
     "@types/node": "26.2.0",
     "ai": "7.0.66",
     "changelogen": "0.6.2",
-    "obuild": "0.4.38",
-    "oxfmt": "0.63.0",
-    "oxlint": "1.78.0",
-    "oxlint-tsgolint": "^7.0.2001",
     "typescript": "7.0.2",
-    "vitest": "4.1.10",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
     "zod": "4.4.3"
   },
   "peerDependencies": {

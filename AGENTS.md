@@ -17,14 +17,16 @@ Keep AGENTS.md updated with project status.
 - Extension tests go through `test/fixtures/`: Pi's own loader and runner for Pi, a strict OMP host double that throws by name on any member the test did not stub. The OMP package root ships TypeScript inside `node_modules`, so Node cannot load its real loader.
 - The CLI keeps citty's colors out of pipes, files and terminals without color support.
 - Linting and formatting consume the shared `@agntn/ox` policy.
+- The toolchain runs on Vite+ 1.0: `vp pack` keeps obuild's `dist/` layout (`_chunks/<name>.mjs`, source and declaration maps), CI installs through `voidzero-dev/setup-vp`.
 
 ## Stack
 
 - **Runtime**: Node.js 26 for development and release; >= 24 supported
 - **Language**: TypeScript (strict)
-- **Build**: obuild (zero-config ESM builder)
-- **Test**: vitest
-- **Lint**: oxlint + oxfmt through `@agntn/ox`
+- **Toolchain**: Vite+ (`vp`), one `vite.config.ts` for pack, test, lint and fmt
+- **Build**: `vp pack` (tsdown)
+- **Test**: `vp test` (bundled Vitest, API from `vite-plus/test`)
+- **Lint**: `vp lint` + `vp fmt` (Oxlint + Oxfmt) through `@agntn/ox`
 - **Typecheck**: tsc (native TypeScript 7)
 - **Release**: changelogen
 - **Package manager**: pnpm
