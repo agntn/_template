@@ -4,7 +4,7 @@ Keep AGENTS.md updated with project status.
 
 ## Status
 
-- Node.js 26 development/release baseline with Node.js 24 support is complete and verified.
+- Node.js 26 is the minimum and the only version CI tests and releases on.
 - Stable TypeScript 7 typechecking and declaration builds are complete and verified.
 - Direct dependencies and pnpm are updated to their latest stable releases and verified.
 - npm publishing uses GitHub Actions OIDC trusted publishing without a long-lived registry token.
@@ -23,7 +23,7 @@ Keep AGENTS.md updated with project status.
 
 ## Stack
 
-- **Runtime**: Node.js 26 for development and release; >= 24 supported
+- **Runtime**: Node.js >= 26
 - **Language**: TypeScript (strict)
 - **Toolchain**: Vite+ (`vp`), one `vite.config.ts` for pack, test, lint and fmt
 - **Build**: `vp pack` (tsdown)
