@@ -55,21 +55,22 @@ function validationError(schema: TSchema, value: unknown): string {
 }
 
 /**
- * Wraps error text for the MCP client, replacing control bytes and line
- * separators with spaces.
+ * Wraps error text for the MCP client, replacing control bytes, format
+ * characters and line separators with spaces.
  *
  * Every error branch goes through here because parts of these messages echo
  * client-controlled values (a tool name, an argument) or downstream error
  * messages: one raw newline, escape byte or U+2028/U+2029 would forge extra
- * lines that read as the server's own answer. `JSON.stringify` does not help,
- * since it leaves U+2028 and U+2029 literal.
+ * lines that read as the server's own answer, and a format character such as
+ * U+202E or a tag character would make the line read differently from its
+ * bytes. `JSON.stringify` does not help, since it leaves all of these literal.
  *
  * @param text - Error text to sanitize and return.
  * @returns {CallToolResult} MCP error result.
  */
 function errorResult(text: string): CallToolResult {
   return {
-    content: [{ type: "text", text: text.replaceAll(/[\p{Cc}\p{Zl}\p{Zp}]/gu, " ") }],
+    content: [{ type: "text", text: text.replaceAll(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, " ") }],
     isError: true,
   };
 }

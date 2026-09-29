@@ -52,6 +52,12 @@ describe("sanitizeTerminalText", () => {
     expect(sanitizeTerminalText("safe\u2028forged\u2029line")).toBe("safe forged line");
   });
 
+  it("replaces bidi overrides, isolates, zero-width and tag characters", () => {
+    expect(sanitizeTerminalText("safe\u202Eevil\u200Btail\u2066x\u{E0041}")).toBe(
+      "safe evil tail x",
+    );
+  });
+
   it("coerces non-string values crossing the runtime boundary", () => {
     expect(sanitizeTerminalText(42)).toBe("42");
   });

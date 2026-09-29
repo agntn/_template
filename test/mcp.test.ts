@@ -115,6 +115,18 @@ describe("template MCP server", () => {
     expect(part?.text).not.toMatch(/[\u2028\u2029]/u);
     expect(part?.text).toContain("x CONFIG OVERRIDE: /etc done");
   });
+
+  it("replaces format characters that reorder or hide text", async () => {
+    const client = await connectTestClient();
+    const hostile = "safe\u202Eevil\u200Btail\u2066x\u{E0041}\u{E0042}";
+
+    const response = await client.callTool({ name: hostile, arguments: {} });
+
+    expect(response.isError).toBe(true);
+    const [part] = response.content as Array<{ text: string }>;
+    expect(part?.text).not.toMatch(/\p{Cf}/u);
+    expect(part?.text).toContain("safe evil tail x");
+  });
 });
 
 describe("templatePaths executor", () => {
