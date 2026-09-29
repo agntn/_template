@@ -13,6 +13,7 @@ Keep AGENTS.md updated with project status.
 - `pnpm typecheck` covers `test/` through `test/tsconfig.json`, after the build, since tests import the extensions and their `dist` types. Vitest only strips types, so nothing checked the tests before.
 - The OMP extension draws its status line with the host `theme` and imports only the `@oh-my-pi/pi-coding-agent` root at runtime. Compiled OMP injects no `/tui`, so `renderStatusLine` from there stopped the extension loading; the unit test now throws on that import.
 - An MCP server template sharing its tool executors with the Pi and OMP extensions is complete and verified.
+- A tool executor throws when it cannot answer, and `ToolResult` has no `isError`: Pi records every returned value as a successful call, so a returned failure read as success there. The MCP handler turns the throw into a sanitized `isError` result.
 - A local MCP server needs a restart, not `pnpm build`: inside a checkout `dist/cli.mjs` loads the `mcp` command from `src/` (see Conventions). `test/cli.test.ts` proves both modes and each guard.
 - Extension tests go through `test/fixtures/`: Pi's own loader and runner for Pi, a strict OMP host double that throws by name on any member the test did not stub. The OMP package root ships TypeScript inside `node_modules`, so Node cannot load its real loader.
 - The CLI keeps citty's colors out of pipes, files and terminals without color support.

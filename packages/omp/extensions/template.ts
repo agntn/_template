@@ -58,13 +58,9 @@ export default function templateExtension(pi: ExtensionAPI): void {
       }),
     }),
     approval: "read",
-    async execute(
-      _toolCallId,
-      params,
-    ): Promise<AgentToolResult<TemplateTools.AppPaths | TemplateTools.PathsFailure>> {
+    async execute(_toolCallId, params): Promise<AgentToolResult<TemplateTools.AppPaths>> {
       const { templatePaths } = await loadToolOperations();
-      const { content, details } = templatePaths(params.appName);
-      return { content, details };
+      return templatePaths(params.appName);
     },
     // The status line is drawn with the host theme on purpose: compiled OMP injects only the
     // package root, so a runtime import from `@oh-my-pi/pi-coding-agent/tui` would stop the

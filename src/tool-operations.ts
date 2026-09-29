@@ -11,18 +11,13 @@ import type { AppPaths } from "./index.ts";
 
 export type { AppPaths };
 
-/** Text for the model plus details for the harness, shared by every tool surface. */
+/**
+ * Text for the model plus details for the harness, shared by every tool surface.
+ * A failure throws instead: Pi records every returned value as a successful call.
+ */
 export interface ToolResult<Details> {
   content: Array<{ type: "text"; text: string }>;
   details: Details;
-  /** Set when the tool could not answer. MCP forwards it, the agent harnesses drop it. */
-  isError?: boolean;
-}
-
-/** Returned when the app name failed the executor's own check. */
-export interface PathsFailure {
-  error: string;
-  appName: string;
 }
 
 /** One name contract for every surface; the schemas repeat it, the executor enforces it. */
@@ -39,16 +34,14 @@ const appNamePattern = new RegExp(APP_NAME_PATTERN);
  * override variable (`MY.APP_CONFIG_DIR`) a regular shell cannot export.
  *
  * @param appName - Filesystem-safe application name.
- * @returns {ToolResult<AppPaths | PathsFailure>} Resolved paths or a validation error.
+ * @returns {ToolResult<AppPaths>} Resolved paths.
+ * @throws {Error} When the name breaks the contract.
  */
-export function templatePaths(appName: string): ToolResult<AppPaths | PathsFailure> {
+export function templatePaths(appName: string): ToolResult<AppPaths> {
   if (appName.length > APP_NAME_MAX_LENGTH || !appNamePattern.test(appName)) {
-    const error = `Invalid app name: ${JSON.stringify(appName)}. Use letters, digits, "_" or "-", starting with a letter or digit.`;
-    return {
-      content: [{ type: "text", text: error }],
-      details: { error, appName },
-      isError: true,
-    };
+    throw new Error(
+      `Invalid app name: ${JSON.stringify(appName)}. Use letters, digits, "_" or "-", starting with a letter or digit.`,
+    );
   }
 
   const paths = resolveAppPaths(appName);
