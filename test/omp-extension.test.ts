@@ -48,6 +48,10 @@ describe("sanitizeTerminalText", () => {
     expect(clean).toContain("end");
   });
 
+  it("replaces line and paragraph separators", () => {
+    expect(sanitizeTerminalText("safe\u2028forged\u2029line")).toBe("safe forged line");
+  });
+
   it("coerces non-string values crossing the runtime boundary", () => {
     expect(sanitizeTerminalText(42)).toBe("42");
   });
