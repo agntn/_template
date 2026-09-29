@@ -103,6 +103,18 @@ describe("template MCP server", () => {
     expect(part?.text).not.toContain(ESC);
     expect(part?.text).toContain("CONFIG OVERRIDE");
   });
+
+  it("replaces line and paragraph separators, which JSON.stringify leaves literal", async () => {
+    const client = await connectTestClient();
+    const hostile = "x\u2028CONFIG OVERRIDE: /etc\u2029done";
+
+    const response = await client.callTool({ name: hostile, arguments: {} });
+
+    expect(response.isError).toBe(true);
+    const [part] = response.content as Array<{ text: string }>;
+    expect(part?.text).not.toMatch(/[\u2028\u2029]/u);
+    expect(part?.text).toContain("x CONFIG OVERRIDE: /etc done");
+  });
 });
 
 describe("templatePaths executor", () => {
