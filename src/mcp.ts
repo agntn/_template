@@ -73,22 +73,6 @@ function errorResult(text: string): CallToolResult {
 }
 
 /**
- * Converts a shared tool result to the MCP text-result contract.
- *
- * `details` is dropped and `structuredContent` is never set: clients that see
- * structured output prefer it over `content` and would hide the readable answer.
- *
- * @param result - Shared tool result to convert.
- * @returns {CallToolResult} MCP text result.
- */
-function toCallToolResult(result: ToolResult<unknown>): CallToolResult {
-  return {
-    content: result.content,
-    ...(result.isError === undefined ? {} : { isError: result.isError }),
-  };
-}
-
-/**
  * Creates an unconnected MCP server exposing the template tools.
  *
  * Built on the low-level `Server` even though the SDK marks it `@deprecated`,
@@ -130,7 +114,9 @@ export function createMcpServer(): Server {
     }
 
     try {
-      return toCallToolResult(tool.execute(args));
+      // `details` stays out and `structuredContent` is never set: clients that see
+      // structured output prefer it over `content` and would hide the readable answer.
+      return { content: tool.execute(args).content };
     } catch (error) {
       return errorResult(
         `${tool.name} failed: ${error instanceof Error ? error.message : String(error)}`,

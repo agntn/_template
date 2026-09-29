@@ -42,13 +42,9 @@ export default function templateExtension(pi: ExtensionAPI): void {
         pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*$",
       }),
     }),
-    async execute(
-      _toolCallId,
-      params,
-    ): Promise<AgentToolResult<TemplateTools.AppPaths | TemplateTools.PathsFailure>> {
+    async execute(_toolCallId, params): Promise<AgentToolResult<TemplateTools.AppPaths>> {
       const { templatePaths } = await loadToolOperations();
-      const { content, details } = templatePaths(params.appName);
-      return { content, details };
+      return templatePaths(params.appName);
     },
   });
 }

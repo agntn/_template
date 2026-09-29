@@ -97,6 +97,14 @@ describe("omp template extension", () => {
     expect(details.cache).toContain("vitest-app");
   });
 
+  it("fails the call on an app name the executor rejects", async () => {
+    const tool = registerTemplateTool();
+
+    await expect(
+      tool.execute("call-1", { appName: "my.app" }, undefined, undefined, ompToolContext),
+    ).rejects.toThrow('Invalid app name: "my.app"');
+  });
+
   it.each([
     [false, undefined, "success:status.done"],
     [true, undefined, "muted:status.pending"],

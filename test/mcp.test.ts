@@ -109,7 +109,6 @@ describe("templatePaths executor", () => {
   it("resolves paths and mirrors them in text and details", () => {
     const result = templatePaths("vitest-app");
 
-    expect(result.isError).toBeUndefined();
     expect(result.content[0]?.text).toContain("Config: ");
     const details = result.details as { config: string; data: string; cache: string };
     expect(details.config).toContain("vitest-app");
@@ -118,10 +117,6 @@ describe("templatePaths executor", () => {
   });
 
   it("guards the name contract even when a host skips schema validation", () => {
-    const result = templatePaths("my.app");
-
-    expect(result.isError).toBe(true);
-    expect(result.content[0]?.text).toContain('Invalid app name: "my.app"');
-    expect(result.details).toMatchObject({ appName: "my.app" });
+    expect(() => templatePaths("my.app")).toThrow('Invalid app name: "my.app"');
   });
 });

@@ -43,4 +43,15 @@ describe("pi template extension", () => {
     expect(details.data).toContain("pi-vitest-app");
     expect(details.cache).toContain("pi-vitest-app");
   });
+
+  it("fails the call on an app name the executor rejects", async () => {
+    const host = await loadPiExtension(extensionPath);
+
+    // Pi records every returned value as a successful call; only a throw fails it.
+    await expect(
+      host
+        .tool("template_paths")
+        .execute("call-1", { appName: "my.app" }, undefined, undefined, host.context),
+    ).rejects.toThrow('Invalid app name: "my.app"');
+  });
 });
