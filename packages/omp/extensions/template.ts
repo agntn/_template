@@ -30,12 +30,14 @@ function loadToolOperations(): Promise<typeof TemplateTools> {
 
 // Renderer interpolations cross the terminal trust boundary: model arguments and
 // external values may carry ANSI/OSC escape sequences or raw C0/C1 control bytes
-// that OMP's Text component passes through to the terminal unchanged, and
-// U+2028/U+2029, which break a line in renderers that honour them. String()
-// first, because hostile JSON is not bound by the declared parameter types.
+// that OMP's Text component passes through to the terminal unchanged,
+// U+2028/U+2029, which break a line in renderers that honour them, and format
+// characters such as U+202E, which make the line read differently from its
+// bytes. String() first, because hostile JSON is not bound by the declared
+// parameter types.
 export function sanitizeTerminalText(value: unknown): string {
   return stripVTControlCharacters(String(value))
-    .replaceAll(/[\p{Cc}\p{Zl}\p{Zp}]/gu, " ")
+    .replaceAll(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, " ")
     .replaceAll(/ +/g, " ")
     .trim();
 }
