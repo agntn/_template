@@ -22,14 +22,14 @@ Keep AGENTS.md updated with project status.
 - Linting and formatting consume the shared `@agntn/ox` policy.
 - `vp fmt` skips the root `CHANGELOG.md`. changelogen writes two spaces after the ⚠️ of a breaking entry and oxfmt wants one, so the check failed after every breaking release. The pattern is anchored, so a nested `CHANGELOG.md` is still formatted.
 - `pnpm-workspace.yaml` exempts `@agntn/*` from `minimumReleaseAge`. A clean frozen install rejects a lockfile entry younger than a day, so CI failed for a day after every sibling release. The scope pattern also covers the next package and version, which an exact entry does not.
-- The toolchain runs on Vite+ 1.0: `vp pack` keeps obuild's `dist/` layout (`_chunks/<name>.mjs`, source and declaration maps), CI installs through `voidzero-dev/setup-vp`.
+- The toolchain runs on Vite+ 1.0 for lint, fmt and test, and CI installs through `voidzero-dev/setup-vp`. The build went back to obuild, like `@agntn/puzzles`, `@agntn/keys` and `@agntn/hashes`: the same `dist/` files and exports as `vp pack`, with less JS.
 
 ## Stack
 
 - **Runtime**: Node.js >= 26
 - **Language**: TypeScript (strict)
-- **Toolchain**: Vite+ (`vp`), one `vite.config.ts` for pack, test, lint and fmt
-- **Build**: `vp pack` (tsdown)
+- **Toolchain**: Vite+ (`vp`), one `vite.config.ts` for test, lint and fmt
+- **Build**: obuild from `build.config.ts`, one bundle for all five entries, chunks under `dist/_chunks/` with stable names
 - **Test**: `vp test` (bundled Vitest, API from `vite-plus/test`)
 - **Lint**: `vp lint` + `vp fmt` (Oxlint + Oxfmt) through `@agntn/ox`
 - **Typecheck**: tsc (native TypeScript 7)
@@ -38,7 +38,7 @@ Keep AGENTS.md updated with project status.
 
 ## Scripts
 
-- `pnpm dev` - stub build for development
+- `pnpm dev` - `obuild --stub`, so `dist` re-exports `src`. The three `mcp` bundle checks in `test/cli.test.ts` fail against it; run them after a real build
 - `pnpm build` - production build
 - `pnpm test` - run tests once
 - `pnpm test:watch` - run tests in watch mode
