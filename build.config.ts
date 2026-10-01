@@ -5,13 +5,7 @@ export default defineBuildConfig({
     {
       /** One bundle, so every entry shares module-level state with the MCP server. */
       type: "bundle",
-      input: [
-        "./src/index.ts",
-        "./src/cli.ts",
-        "./src/ai.ts",
-        "./src/mcp.ts",
-        "./src/tool-operations.ts",
-      ],
+      input: ["./src/index.ts", "./src/cli.ts", "./src/ai.ts", "./src/mcp.ts", "./src/tools.ts"],
     },
   ],
 });

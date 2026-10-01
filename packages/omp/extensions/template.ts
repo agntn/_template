@@ -1,109 +1,57 @@
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { stripVTControlCharacters } from "node:util";
 
-import type { AgentToolResult, ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
-import { Text } from "@oh-my-pi/pi-coding-agent";
+import { registerOmpTools, type OmpResultView } from "@agntn/tools/omp";
+import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 
-import type * as TemplateTools from "../../../dist/tool-operations.d.mts";
+import type * as TemplateTools from "../../../dist/tools.d.mts";
 
-const sourceModulePath = fileURLToPath(new URL("../../../src/tool-operations.ts", import.meta.url));
-let toolOperationsPromise: Promise<typeof TemplateTools> | undefined;
+/** Longest name on the status line, cut before `sanitizeLine`, which is slow on long escapes. */
+const PREVIEW_LENGTH = 100;
+
+const sourceModulePath = fileURLToPath(new URL("../../../src/tools.ts", import.meta.url));
 
 /**
- * Loads the tool executors shared with the MCP server and the Pi extension,
- * so the tool answers stay identical across surfaces. Both specifiers stay
- * literal on purpose: OMP's compiled loader rewrites bare dependencies only
- * for imports it can see statically.
+ * Both specifiers stay literal: compiled OMP resolves bare imports only where it sees them.
  *
- * @returns {Promise<typeof TemplateTools>} Shared tool operations module.
+ * @returns {Promise<typeof TemplateTools>} The definitions and the executor loader.
  */
-function loadToolOperations(): Promise<typeof TemplateTools> {
-  toolOperationsPromise ??= (
+function loadTools(): Promise<typeof TemplateTools> {
+  return (
     existsSync(sourceModulePath)
-      ? import("../../../src/tool-operations.ts")
-      : import("../../../dist/tool-operations.mjs")
+      ? import("../../../src/tools.ts")
+      : import("../../../dist/tools.mjs")
   ) as Promise<typeof TemplateTools>;
-
-  return toolOperationsPromise;
 }
 
-// Renderer interpolations cross the terminal trust boundary: model arguments and
-// external values may carry ANSI/OSC escape sequences or raw C0/C1 control bytes
-// that OMP's Text component passes through to the terminal unchanged,
-// U+2028/U+2029, which break a line in renderers that honour them, and format
-// characters such as U+202E, which make the line read differently from its
-// bytes. String() first, because hostile JSON is not bound by the declared
-// parameter types.
-export function sanitizeTerminalText(value: unknown): string {
-  return stripVTControlCharacters(String(value))
-    .replaceAll(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, " ")
-    .replaceAll(/ +/g, " ")
-    .trim();
+/**
+ * Lists the three resolved directories, or nothing for a result without them.
+ *
+ * @param result - Tool result from the host.
+ * @returns {string[]} One entry per directory.
+ */
+function describePaths(result: OmpResultView): string[] {
+  const { details } = result;
+  if (typeof details !== "object" || details === null || !("config" in details)) return [];
+  const { config, data, cache } = details as { config?: unknown; data?: unknown; cache?: unknown };
+  return [`config ${String(config)}`, `data ${String(data)}`, `cache ${String(cache)}`];
 }
 
-export default function templateExtension(pi: ExtensionAPI): void {
-  // OMP validates tool parameters with its own TypeBox build, so schemas must
-  // come from the host-injected facade rather than a standalone typebox import.
-  const { Type } = pi.typebox;
+/**
+ * Registers the template tools; the executors load on the first call.
+ *
+ * @param pi - OMP extension API supplied by the host.
+ */
+export default async function templateExtension(pi: ExtensionAPI): Promise<void> {
   pi.setLabel("Template");
-
-  pi.registerTool({
-    name: "template_paths",
-    label: "Template Paths",
-    description: "Resolve platform-standard config, data, and cache directories for an application",
-    parameters: Type.Object({
-      appName: Type.String({
-        description: "Filesystem-safe application name",
-        minLength: 1,
-        maxLength: 100,
-        pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-      }),
-    }),
-    approval: "read",
-    async execute(_toolCallId, params): Promise<AgentToolResult<TemplateTools.AppPaths>> {
-      const { templatePaths } = await loadToolOperations();
-      return templatePaths(params.appName);
-    },
-    // The status line is drawn with the host theme on purpose: compiled OMP injects only the
-    // package root, so a runtime import from `@oh-my-pi/pi-coding-agent/tui` would stop the
-    // whole extension from loading.
-    renderCall(args, options, theme) {
-      const icon = options.isPartial
-        ? options.spinnerFrame === undefined
-          ? theme.styledSymbol("status.pending", "muted")
-          : (theme.spinnerFrames[options.spinnerFrame % theme.spinnerFrames.length] ??
-            theme.styledSymbol("status.running", "accent"))
-        : theme.styledSymbol("status.done", "success");
-      const description = sanitizeTerminalText(args.appName);
-      const title = theme.fg("accent", "Template Paths");
-
-      return new Text(
-        `${icon} ${title}${description ? `: ${theme.fg("muted", description)}` : ""}`,
-        0,
-        0,
-      );
-    },
-    renderResult(result, _options, theme) {
-      const paths = result.details;
-      const resolved = paths && "config" in paths ? paths : undefined;
-      const icon = result.isError
-        ? theme.styledSymbol("status.error", "error")
-        : theme.styledSymbol("status.done", "success");
-      const { bracketLeft, bracketRight } = theme.format;
-      const badge = theme.fg("accent", `${bracketLeft}read${bracketRight}`);
-      const meta = resolved
-        ? ` ${theme.fg(
-            "dim",
-            [
-              `config ${sanitizeTerminalText(resolved.config)}`,
-              `data ${sanitizeTerminalText(resolved.data)}`,
-              `cache ${sanitizeTerminalText(resolved.cache)}`,
-            ].join(theme.sep.dot),
-          )}`
-        : "";
-
-      return new Text(`${icon} ${theme.fg("accent", "Template Paths")} ${badge}${meta}`, 0, 0);
+  const { templateTools } = await loadTools();
+  registerOmpTools(pi, templateTools, {
+    Text: pi.pi.Text,
+    renderers: {
+      template_paths: {
+        describeCall: (args) => String(args["appName"]).slice(0, PREVIEW_LENGTH),
+        describeResult: describePaths,
+      },
     },
   });
 }

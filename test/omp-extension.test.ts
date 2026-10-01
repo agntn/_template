@@ -1,24 +1,15 @@
-import { describe, expect, it, vi } from "vite-plus/test";
-import type * as typebox from "@oh-my-pi/omptype/typebox";
+import { ToolInputError, wireSchema } from "@agntn/tools";
 import type { ToolDefinition } from "@oh-my-pi/pi-coding-agent";
+import { describe, expect, it, vi } from "vite-plus/test";
 
-// Compiled OMP injects only the package root into extensions, so the renderers run
-// against a capturing Text and the TUI barrel must stay off the load path.
-vi.mock("@oh-my-pi/pi-coding-agent", () => ({
-  Text: class {
-    readonly text: string;
-
-    constructor(text: string) {
-      this.text = text;
-    }
-  },
-}));
+/** Compiled OMP injects no TUI barrel, so loading it has to fail the test. */
 vi.mock("@oh-my-pi/pi-coding-agent/tui", () => {
   throw new Error("The OMP host does not inject the TUI barrel");
 });
 
-import templateExtension, { sanitizeTerminalText } from "../packages/omp/extensions/template.ts";
-import { APP_NAME_MAX_LENGTH, APP_NAME_PATTERN } from "../src/tool-operations.ts";
+import templateExtension from "../packages/omp/extensions/template.ts";
+import { APP_NAME_MAX_LENGTH, APP_NAME_PATTERN } from "../src/tool-contract.ts";
+import { pathsTool } from "../src/tools.ts";
 import {
   ompTestTheme as theme,
   ompToolContext,
@@ -27,45 +18,17 @@ import {
 
 const CONTROL_BYTES = /[\u0000-\u001F\u007F-\u009F]/;
 
-function registerTemplateTool(): ToolDefinition {
-  return registerOmpExtension(templateExtension).tool("template_paths");
+async function registerTemplateTool(): Promise<ToolDefinition> {
+  return (await registerOmpExtension(templateExtension)).tool("template_paths");
 }
 
 function renderedText(component: unknown): string {
   return (component as { text: string }).text;
 }
 
-describe("sanitizeTerminalText", () => {
-  it("strips ANSI, OSC, C0, and C1 sequences", () => {
-    const hostile = "\u001B]0;evil\u0007safe\u001B[31mname\u009B1mtail\u0000end";
-
-    const clean = sanitizeTerminalText(hostile);
-
-    expect(clean).not.toMatch(CONTROL_BYTES);
-    expect(clean).not.toContain("evil");
-    expect(clean).not.toContain("31m");
-    expect(clean).toContain("safe");
-    expect(clean).toContain("end");
-  });
-
-  it("replaces line and paragraph separators", () => {
-    expect(sanitizeTerminalText("safe\u2028forged\u2029line")).toBe("safe forged line");
-  });
-
-  it("replaces bidi overrides, isolates, zero-width and tag characters", () => {
-    expect(sanitizeTerminalText("safe\u202Eevil\u200Btail\u2066x\u{E0041}")).toBe(
-      "safe evil tail x",
-    );
-  });
-
-  it("coerces non-string values crossing the runtime boundary", () => {
-    expect(sanitizeTerminalText(42)).toBe("42");
-  });
-});
-
 describe("omp template extension", () => {
-  it("registers template_paths as a read-approval tool", () => {
-    const host = registerOmpExtension(templateExtension);
+  it("registers template_paths as a read-approval tool", async () => {
+    const host = await registerOmpExtension(templateExtension);
     const tool = host.tool("template_paths");
 
     expect([...host.tools.keys()]).toEqual(["template_paths"]);
@@ -75,22 +38,26 @@ describe("omp template extension", () => {
     expect(tool.approval).toBe("read");
   });
 
-  it("keeps the restated schema aligned with the executor's name contract", () => {
-    const tool = registerTemplateTool();
-    const accepts = (value: unknown): boolean =>
-      (tool.parameters as unknown as typebox.TSchema).safeParse(value).success;
+  it("hands OMP the shared schema and refuses what it rejects", async () => {
+    const tool = await registerTemplateTool();
+    const outcome = async (appName: string): Promise<string> =>
+      Promise.resolve(
+        tool.execute("call-1", { appName }, undefined, undefined, ompToolContext),
+      ).then(
+        () => "ran",
+        (error: unknown) => (error instanceof ToolInputError ? "refused" : "failed"),
+      );
     const longest = "a".repeat(APP_NAME_MAX_LENGTH);
 
-    // The parameters are declared before the executor can be loaded, so the
-    // restated pattern and length have to match what the executor enforces.
+    expect(tool.parameters).toEqual(wireSchema(pathsTool));
     expect(new RegExp(APP_NAME_PATTERN).test(longest)).toBe(true);
-    expect(accepts({ appName: longest })).toBe(true);
-    expect(accepts({ appName: `${longest}a` })).toBe(false);
-    expect(accepts({ appName: "my.app" })).toBe(false);
+    expect(await outcome(longest)).toBe("ran");
+    expect(await outcome(`${longest}a`)).toBe("refused");
+    expect(await outcome("my.app")).toBe("refused");
   });
 
   it("executes against the library and returns structured details", async () => {
-    const tool = registerTemplateTool();
+    const tool = await registerTemplateTool();
 
     const result = await tool.execute(
       "call-1",
@@ -107,12 +74,12 @@ describe("omp template extension", () => {
     expect(details.cache).toContain("vitest-app");
   });
 
-  it("fails the call on an app name the executor rejects", async () => {
-    const tool = registerTemplateTool();
+  it("fails the call on an app name the schema rejects", async () => {
+    const tool = await registerTemplateTool();
 
     await expect(
       tool.execute("call-1", { appName: "my.app" }, undefined, undefined, ompToolContext),
-    ).rejects.toThrow('Invalid app name: "my.app"');
+    ).rejects.toThrow("Invalid arguments at /appName");
   });
 
   it.each([
@@ -121,8 +88,8 @@ describe("omp template extension", () => {
     [true, 3, "frame-1"],
   ] as const)(
     "draws the call status with the host theme (partial=%s, frame=%s)",
-    (isPartial, spinnerFrame, icon) => {
-      const tool = registerTemplateTool();
+    async (isPartial, spinnerFrame, icon) => {
+      const tool = await registerTemplateTool();
 
       const text = renderedText(
         tool.renderCall?.(
@@ -136,8 +103,8 @@ describe("omp template extension", () => {
     },
   );
 
-  it("sanitizes model arguments in renderCall", () => {
-    const tool = registerTemplateTool();
+  it("sanitizes model arguments in renderCall", async () => {
+    const tool = await registerTemplateTool();
     const hostile = { appName: "\u001B]0;evil\u0007app\u001B[31mname\nnext" };
 
     const text = renderedText(
@@ -148,8 +115,34 @@ describe("omp template extension", () => {
     expect(text).toBe("success:status.done accent(Template Paths): muted(appname next)");
   });
 
-  it("survives a numeric argument that violates the declared schema type", () => {
-    const tool = registerTemplateTool();
+  it("replaces line separators and format characters in renderCall", async () => {
+    const tool = await registerTemplateTool();
+    const hostile = { appName: "safe\u2028forged\u2029line\u202Eevil\u200Btail\u{E0041}" };
+
+    const text = renderedText(
+      tool.renderCall?.(hostile, { expanded: false, isPartial: false }, theme),
+    );
+
+    expect(text).toBe(
+      "success:status.done accent(Template Paths): muted(safe forged line evil tail)",
+    );
+  });
+
+  it("cuts a long argument before sanitizing it", async () => {
+    const tool = await registerTemplateTool();
+    const started = performance.now();
+
+    tool.renderCall?.(
+      { appName: "\u001B]".repeat(100_000) },
+      { expanded: false, isPartial: true },
+      theme,
+    );
+
+    expect(performance.now() - started).toBeLessThan(500);
+  });
+
+  it("survives a numeric argument that violates the declared schema type", async () => {
+    const tool = await registerTemplateTool();
 
     const text = renderedText(
       tool.renderCall?.({ appName: 42 }, { expanded: false, isPartial: true }, theme),
@@ -158,8 +151,8 @@ describe("omp template extension", () => {
     expect(text).toBe("muted:status.pending accent(Template Paths): muted(42)");
   });
 
-  it("sanitizes result data in renderResult and keeps the read badge", () => {
-    const tool = registerTemplateTool();
+  it("sanitizes result data in renderResult and keeps the read badge", async () => {
+    const tool = await registerTemplateTool();
     const result = {
       content: [{ type: "text" as const, text: "ok" }],
       details: {
@@ -179,8 +172,8 @@ describe("omp template extension", () => {
     );
   });
 
-  it("marks an error result with the error icon and no meta", () => {
-    const tool = registerTemplateTool();
+  it("marks an error result with the error icon and no meta", async () => {
+    const tool = await registerTemplateTool();
     const result = { content: [{ type: "text" as const, text: "boom" }], isError: true };
 
     const text = renderedText(

@@ -1,24 +1,15 @@
-import { tool, type Tool } from "ai";
-import { z } from "zod";
-import { version } from "./version.ts";
-type HelloInput = {
-  name?: string;
-};
+/** Vercel AI SDK tool surface over the shared template tool definitions. */
 
-type HelloOutput = {
-  message: string;
-  version: string;
-};
+import { toAiTool, type AiToolOutput } from "@agntn/tools/ai";
+import type { Tool } from "ai";
+import type { AppPaths } from "./tool-operations.ts";
+import { pathsTool } from "./tools.ts";
 
-export const helloTool: Tool<HelloInput, HelloOutput> = tool({
-  description: "Say hello and return the package version.",
-  inputSchema: z.object({
-    name: z.string().optional().describe("Name to greet"),
-  }),
-  execute: async ({ name }) => {
-    return {
-      message: `Hello, ${name || "world"}!`,
-      version,
-    };
-  },
-});
+export const templatePathsTool: Tool<{ appName: string }, AiToolOutput<AppPaths>> = toAiTool(
+  pathsTool,
+);
+
+/** Every template tool, keyed by the name MCP, Pi and OMP use for it. */
+export const templateAiTools = {
+  template_paths: templatePathsTool,
+};
