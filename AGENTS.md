@@ -17,6 +17,7 @@ Keep AGENTS.md updated with project status.
 - MCP error text and OMP renderer text replace `[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]` with spaces. U+2028 and U+2029 are not `Cc`, `JSON.stringify` leaves them literal, and most renderers still break a line on them. `Cf` covers bidi overrides and isolates, zero-width characters and tag characters, which make a line read differently from its bytes; both helpers handle a single line, so dropping ZWJ and ZWNJ costs nothing there.
 - A local MCP server needs a restart, not `pnpm build`: inside a checkout `dist/cli.mjs` loads the `mcp` command from `src/` (see Conventions). `test/cli.test.ts` proves both modes and each guard.
 - Extension tests go through `test/fixtures/`: Pi's own loader and runner for Pi, a strict OMP host double that throws by name on any member the test did not stub. The OMP package root ships TypeScript inside `node_modules`, so Node cannot load its real loader.
+- `pnpm release` and the Publish workflow build before `pnpm test`, as CI does. The `mcp` checks in `test/cli.test.ts` start `dist/cli.mjs`, so testing first ran them against a stale build, or skipped them on a clean runner. `test/release.test.ts` fails when either order flips.
 - The CLI keeps citty's colors out of pipes, files and terminals without color support.
 - Linting and formatting consume the shared `@agntn/ox` policy.
 - The toolchain runs on Vite+ 1.0: `vp pack` keeps obuild's `dist/` layout (`_chunks/<name>.mjs`, source and declaration maps), CI installs through `voidzero-dev/setup-vp`.
@@ -42,7 +43,7 @@ Keep AGENTS.md updated with project status.
 - `pnpm lint` - lint + format check
 - `pnpm fmt` - auto-fix lint + format
 - `pnpm typecheck` - type checking
-- `pnpm release` - test, build, and release
+- `pnpm release` - build, test against that build, and release, in CI's order
 
 ## Structure
 

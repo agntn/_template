@@ -20,6 +20,8 @@ jobs:
           node-version: 26
           registry-url: https://registry.npmjs.org
 
+      - run: pnpm build
+
       - run: pnpm test
 
       - run: pnpm publish

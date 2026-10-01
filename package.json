@@ -48,7 +48,7 @@
     "test": "vp test run",
     "test:watch": "vp test watch",
     "prepack": "pnpm run build",
-    "release": "pnpm test && pnpm build && changelogen --release --push"
+    "release": "pnpm build && pnpm test && changelogen --release --push"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
