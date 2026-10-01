@@ -21,6 +21,7 @@ Keep AGENTS.md updated with project status.
 - The CLI keeps citty's colors out of pipes, files and terminals without color support.
 - Linting and formatting consume the shared `@agntn/ox` policy.
 - `vp fmt` skips the root `CHANGELOG.md`. changelogen writes two spaces after the ⚠️ of a breaking entry and oxfmt wants one, so the check failed after every breaking release. The pattern is anchored, so a nested `CHANGELOG.md` is still formatted.
+- `pnpm-workspace.yaml` exempts `@agntn/*` from `minimumReleaseAge`. A clean frozen install rejects a lockfile entry younger than a day, so CI failed for a day after every sibling release. The scope pattern also covers the next package and version, which an exact entry does not.
 - The toolchain runs on Vite+ 1.0: `vp pack` keeps obuild's `dist/` layout (`_chunks/<name>.mjs`, source and declaration maps), CI installs through `voidzero-dev/setup-vp`.
 
 ## Stack
