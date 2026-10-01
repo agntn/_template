@@ -40,8 +40,8 @@
     "access": "public"
   },
   "scripts": {
-    "build": "vp pack",
-    "dev": "vp pack --watch",
+    "build": "obuild",
+    "dev": "obuild --stub",
     "lint": "pnpm build && vp lint && vp fmt --check",
     "lint:fix": "pnpm build && vp lint --fix && vp fmt",
     "typecheck": "tsc --noEmit --skipLibCheck && pnpm build && tsc -p tsconfig.extensions.json && tsc -p test/tsconfig.json",
@@ -64,6 +64,7 @@
     "@types/node": "26.2.0",
     "ai": "7.0.66",
     "changelogen": "0.6.2",
+    "obuild": "0.4.43",
     "typescript": "7.0.2",
     "vite": "catalog:",
     "vite-plus": "catalog:",
