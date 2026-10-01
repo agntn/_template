@@ -1,50 +1,31 @@
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import type { AgentToolResult, ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { Type } from "typebox";
+import { registerPiTools } from "@agntn/tools/pi";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-import type * as TemplateTools from "../../../dist/tool-operations.d.mts";
+import type * as TemplateTools from "../../../dist/tools.d.mts";
 
-const sourceModuleUrl = new URL("../../../src/tool-operations.ts", import.meta.url);
-const distributionModuleUrl = new URL("../../../dist/tool-operations.mjs", import.meta.url);
-let toolOperationsPromise: Promise<typeof TemplateTools> | undefined;
+const sourceModuleUrl = new URL("../../../src/tools.ts", import.meta.url);
+const distributionModuleUrl = new URL("../../../dist/tools.mjs", import.meta.url);
 
 /**
- * Loads the tool executors shared with the MCP server and the OMP extension,
- * so the tool answers stay identical across surfaces.
+ * Loads the tool definitions, from the source in a checkout and the build in the package.
  *
- * @returns {Promise<typeof TemplateTools>} Shared tool operations module.
+ * @returns {Promise<typeof TemplateTools>} The definitions and the executor loader.
  */
-function loadToolOperations(): Promise<typeof TemplateTools> {
-  toolOperationsPromise ??= import(
+function loadTools(): Promise<typeof TemplateTools> {
+  return import(
     existsSync(fileURLToPath(sourceModuleUrl)) ? sourceModuleUrl.href : distributionModuleUrl.href
   ) as Promise<typeof TemplateTools>;
-
-  return toolOperationsPromise;
 }
 
-export default function templateExtension(pi: ExtensionAPI): void {
-  pi.registerTool({
-    name: "template_paths",
-    label: "Template Paths",
-    description: "Resolve platform-standard config, data, and cache directories for an application",
-    promptSnippet: "Use template_paths to resolve platform-standard application directories.",
-    promptGuidelines: [
-      "Pass the application's filesystem-safe name.",
-      "The tool respects platform conventions, XDG variables, and app-specific directory overrides.",
-    ],
-    parameters: Type.Object({
-      appName: Type.String({
-        description: "Filesystem-safe application name",
-        minLength: 1,
-        maxLength: 100,
-        pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-      }),
-    }),
-    async execute(_toolCallId, params): Promise<AgentToolResult<TemplateTools.AppPaths>> {
-      const { templatePaths } = await loadToolOperations();
-      return templatePaths(params.appName);
-    },
-  });
+/**
+ * Registers the template tools; the executors load on the first call.
+ *
+ * @param pi - Pi extension API.
+ */
+export default async function templateExtension(pi: ExtensionAPI): Promise<void> {
+  const { templateTools } = await loadTools();
+  registerPiTools(pi, templateTools);
 }
