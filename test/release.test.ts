@@ -22,4 +22,13 @@ describe("a release", () => {
     expect(steps).toContain("pnpm build");
     expect(steps.indexOf("pnpm build")).toBeLessThan(steps.indexOf("pnpm test"));
   });
+
+  /** A bare `inputs.tag` would also check out a branch, such as `main` after the version bump. */
+  it("checks out only a tag on a manual dispatch", () => {
+    const refs = [...read(".github/workflows/publish.yml").matchAll(/^\s*ref: (.+)$/gmu)];
+
+    expect(refs.map((match) => match[1])).toEqual([
+      "${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}",
+    ]);
+  });
 });

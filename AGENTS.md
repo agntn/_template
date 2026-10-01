@@ -8,6 +8,7 @@ Keep AGENTS.md updated with project status.
 - Stable TypeScript 7 typechecking and declaration builds are complete and verified.
 - Direct dependencies and pnpm are updated to their latest stable releases and verified.
 - npm publishing uses GitHub Actions OIDC trusted publishing without a long-lived registry token.
+- A failed Publish run is recovered with `gh workflow run publish.yml --ref main -f tag=vX.Y.Z`, not a rerun: a rerun takes `publish.yml` from the tag's commit, so a workflow fix merged since never reaches it. The dispatch checks out `refs/tags/<tag>`, so a branch name typed as the tag fails the checkout instead of publishing `main` under the bumped version. `test/release.test.ts` pins that ref.
 - A publishable Pi extension template with isolated typechecking is complete and verified.
 - A publishable OMP extension template sharing the isolated typechecking setup is complete and verified.
 - `pnpm typecheck` covers `test/` through `test/tsconfig.json`, after the build, since tests import the extensions and their `dist` types. Vitest only strips types, so nothing checked the tests before.
