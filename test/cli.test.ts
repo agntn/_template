@@ -1,5 +1,13 @@
 import { spawnSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -43,8 +51,10 @@ describe("template-ts CLI", () => {
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 
-/** Prints every module URL the child loaded to stderr as it exits. */
-const recordLoads = `data:text/javascript,${encodeURIComponent(`
+/* Writes the module URLs the child loaded to `file` on exit; stderr cuts them at about 146 KB. */
+function recordLoads(file: string) {
+  return `data:text/javascript,${encodeURIComponent(`
+  import { writeFileSync } from "node:fs";
   import { registerHooks } from "node:module";
   const loaded = [];
   registerHooks({
@@ -53,8 +63,9 @@ const recordLoads = `data:text/javascript,${encodeURIComponent(`
       return nextLoad(url, context);
     },
   });
-  process.on("exit", () => process.stderr.write("\\nLOADED " + JSON.stringify(loaded) + "\\n"));
+  process.on("exit", () => writeFileSync(${JSON.stringify(file)}, JSON.stringify(loaded)));
 `)}`;
+}
 
 const initialize = `${JSON.stringify({
   jsonrpc: "2.0",
@@ -76,13 +87,21 @@ const initialize = `${JSON.stringify({
  * exit code, where the server came from, the server name from the reply and stderr.
  */
 function serve(base: string, extraEnv: Readonly<Record<string, string>> = {}) {
-  const { status, stderr, stdout } = spawnSync(
-    process.execPath,
-    ["--import", recordLoads, join(base, "dist/cli.mjs"), "mcp"],
-    { encoding: "utf8", env: { ...env, ...extraEnv }, input: initialize, timeout: 20_000 },
-  );
-  const marker = stderr.lastIndexOf("\nLOADED ");
-  const loaded: unknown = marker === -1 ? [] : JSON.parse(stderr.slice(marker + 8));
+  const record = mkdtempSync(join(tmpdir(), "template-ts-loaded-"));
+  const file = join(record, "loaded.json");
+  let child;
+  let loaded: unknown = [];
+  try {
+    child = spawnSync(
+      process.execPath,
+      ["--import", recordLoads(file), join(base, "dist/cli.mjs"), "mcp"],
+      { encoding: "utf8", env: { ...env, ...extraEnv }, input: initialize, timeout: 20_000 },
+    );
+    if (existsSync(file)) loaded = JSON.parse(readFileSync(file, "utf8"));
+  } finally {
+    rmSync(record, { recursive: true, force: true });
+  }
+  const { status, stderr, stdout } = child;
   const urls = Array.isArray(loaded) ? loaded.filter((url) => typeof url === "string") : [];
   const source = urls.includes(pathToFileURL(join(base, "src/mcp.ts")).href);
   const bundle = urls.includes(pathToFileURL(join(base, "dist/_chunks/mcp.mjs")).href);
