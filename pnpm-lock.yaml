@@ -40,8 +40,8 @@ importers:
         specifier: 0.84.2
         version: 0.84.2(@modelcontextprotocol/sdk@1.30.0(zod@4.4.3))(ws@8.21.3)(zod@4.4.3)
       '@oh-my-pi/omptype':
-        specifier: 18.0.0
-        version: 18.0.0
+        specifier: 18.4.8
+        version: 18.4.8
       '@oh-my-pi/pi-coding-agent':
         specifier: 18.0.0
         version: 18.0.0
@@ -705,6 +705,10 @@ packages:
 
   '@oh-my-pi/omptype@18.0.0':
     resolution: {integrity: sha512-0WR5CgLGv4bDFBJ6B1Ko4ml5qB8F3u0WCvZXLLR5Ysk18o16ZuBp53MoMthzuXhmpuCI+GxH8RYeygPzBg+brw==}
+    engines: {bun: '>=1.3.14', node: '>=20'}
+
+  '@oh-my-pi/omptype@18.4.8':
+    resolution: {integrity: sha512-YRqUJFD475hWa5mQZUl9pXFKbkmeswE+KXrrS2DjUq+9aBltKZyD9Nvb62AU0RxJyZPKXfgTEWUWoryPShhsgg==}
     engines: {bun: '>=1.3.14', node: '>=20'}
 
   '@oh-my-pi/pi-agent-core@18.0.0':
@@ -3804,6 +3808,8 @@ snapshots:
       tailwindcss: 4.3.3
 
   '@oh-my-pi/omptype@18.0.0': {}
+
+  '@oh-my-pi/omptype@18.4.8': {}
 
   '@oh-my-pi/pi-agent-core@18.0.0':
     dependencies:
