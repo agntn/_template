@@ -3,7 +3,7 @@ import oxlint from "@agntn/ox/oxlint";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
-  fmt: { ...oxfmt, ignorePatterns: [] },
+  fmt: { ...oxfmt, ignorePatterns: ["/CHANGELOG.md"] },
   lint: { ...oxlint, rules: { ...oxlint.rules }, ignorePatterns: [] },
   /**
    * One bundle, five inputs: the entries share their chunks and therefore any module-level state.

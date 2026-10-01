@@ -20,6 +20,7 @@ Keep AGENTS.md updated with project status.
 - `pnpm release` and the Publish workflow build before `pnpm test`, as CI does. The `mcp` checks in `test/cli.test.ts` start `dist/cli.mjs`, so testing first ran them against a stale build, or skipped them on a clean runner. `test/release.test.ts` fails when either order flips.
 - The CLI keeps citty's colors out of pipes, files and terminals without color support.
 - Linting and formatting consume the shared `@agntn/ox` policy.
+- `vp fmt` skips the root `CHANGELOG.md`. changelogen writes two spaces after the ⚠️ of a breaking entry and oxfmt wants one, so the check failed after every breaking release. The pattern is anchored, so a nested `CHANGELOG.md` is still formatted.
 - The toolchain runs on Vite+ 1.0: `vp pack` keeps obuild's `dist/` layout (`_chunks/<name>.mjs`, source and declaration maps), CI installs through `voidzero-dev/setup-vp`.
 
 ## Stack
