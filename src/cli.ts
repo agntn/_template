@@ -3,6 +3,7 @@
 import { existsSync } from "node:fs";
 import { sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { cittyAnswers, shownArgument, undeclaredOption } from "./cli-args.ts";
 import type McpCommand from "./commands/mcp.ts";
 import { version } from "./version.ts";
 
@@ -53,16 +54,34 @@ async function loadMcpCommand(): Promise<typeof McpCommand> {
   return module.default;
 }
 
+const subCommands = {
+  hello: () => import("./commands/hello.ts").then((m) => m.default),
+  mcp: loadMcpCommand,
+};
+
 const main = defineCommand({
   meta: {
     name: "template-ts",
     version,
     description: "",
   },
-  subCommands: {
-    hello: () => import("./commands/hello.ts").then((m) => m.default),
-    mcp: loadMcpCommand,
-  },
+  subCommands,
 });
 
-await runMain(main);
+const rawArgs = process.argv.slice(2);
+const [name] = rawArgs;
+const sub = await Object.entries(subCommands).find(([key]) => key === name)?.[1]();
+const args = await sub?.args;
+const defs = typeof args === "function" ? await args() : args;
+const dashed = cittyAnswers(rawArgs)
+  ? undefined
+  : undeclaredOption(sub ? rawArgs.slice(1) : rawArgs, defs ?? {});
+if (dashed === undefined) {
+  await runMain(main);
+} else {
+  const where = sub ? ` for ${name}` : "";
+  stderr.write(
+    `Unknown option ${shownArgument(dashed)}${where}. Text that starts with - goes after --, which ends the options.\n`,
+  );
+  process.exitCode = 1;
+}

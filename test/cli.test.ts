@@ -47,6 +47,32 @@ describe("template-ts CLI", () => {
       expect(output.stdout + output.stderr).not.toContain("\u001B");
     }
   });
+
+  it("refuses an unknown dashed argument in one line instead of a citty stack trace", () => {
+    const hint = "Text that starts with - goes after --, which ends the options.\n";
+
+    expect(run("-_8")).toMatchObject({
+      code: 1,
+      stdout: "",
+      stderr: `Unknown option "-_8". ${hint}`,
+    });
+    expect(run("hello", "--nmae", "x")).toMatchObject({
+      code: 1,
+      stdout: "",
+      stderr: `Unknown option "--nmae" for hello. ${hint}`,
+    });
+    expect(run("hello", "--version")).toMatchObject({
+      code: 1,
+      stdout: "",
+      stderr: `Unknown option "--version" for hello. ${hint}`,
+    });
+    expect(run("hello", "-hh")).toMatchObject({
+      code: 1,
+      stderr: `Unknown option "-hh" for hello. ${hint}`,
+    });
+    expect(run("--version")).toMatchObject({ code: 0, stdout: "0.0.0\n" });
+    expect(run("hello", "--", "-_8")).toMatchObject({ code: 0, stdout: "Hello, -_8!\n" });
+  });
 });
 
 const root = fileURLToPath(new URL("..", import.meta.url));
