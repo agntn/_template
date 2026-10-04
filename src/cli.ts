@@ -3,7 +3,7 @@
 import { existsSync } from "node:fs";
 import { sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { rootOptions, shownArgument, undeclaredOption } from "./cli-args.ts";
+import { cittyAnswers, shownArgument, undeclaredOption } from "./cli-args.ts";
 import type McpCommand from "./commands/mcp.ts";
 import { version } from "./version.ts";
 
@@ -73,9 +73,9 @@ const [name] = rawArgs;
 const sub = await Object.entries(subCommands).find(([key]) => key === name)?.[1]();
 const args = await sub?.args;
 const defs = typeof args === "function" ? await args() : args;
-const dashed = sub
-  ? undeclaredOption(rawArgs.slice(1), defs ?? {})
-  : undeclaredOption(rawArgs, rootOptions);
+const dashed = cittyAnswers(rawArgs)
+  ? undefined
+  : undeclaredOption(sub ? rawArgs.slice(1) : rawArgs, defs ?? {});
 if (dashed === undefined) {
   await runMain(main);
 } else {

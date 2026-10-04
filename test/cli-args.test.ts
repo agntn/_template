@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { rootOptions, shownArgument, undeclaredOption } from "../src/cli-args.ts";
+import { cittyAnswers, shownArgument, undeclaredOption } from "../src/cli-args.ts";
 
 const defs = {
   input: { type: "positional" },
@@ -29,14 +29,12 @@ describe("undeclaredOption", () => {
       ),
     ).toBeUndefined();
     expect(undeclaredOption(["--page-size", "2", "--pageSize", "3"], defs)).toBeUndefined();
-    expect(undeclaredOption(["--help"], {})).toBeUndefined();
-    expect(undeclaredOption(["-h"], {})).toBeUndefined();
   });
 
-  it("takes --version only where citty answers it, on the root command", () => {
-    expect(undeclaredOption(["--version"], rootOptions)).toBeUndefined();
-    expect(undeclaredOption(["-v"], rootOptions)).toBeUndefined();
-    expect(undeclaredOption(["--version"], {})).toBe("--version");
+  it("knows no help or version of its own, since citty only takes their exact tokens", () => {
+    expect(undeclaredOption(["--help=x"], {})).toBe("--help=x");
+    expect(undeclaredOption(["-hh"], {})).toBe("-hh");
+    expect(undeclaredOption(["--version", "hello"], {})).toBe("--version");
   });
 
   it("gives a dashed value to the option that takes it", () => {
@@ -53,6 +51,16 @@ describe("undeclaredOption", () => {
   it("leaves a lone dash and everything after -- alone", () => {
     expect(undeclaredOption(["-"], defs)).toBeUndefined();
     expect(undeclaredOption(["--", "-_8", "--kye"], defs)).toBeUndefined();
+  });
+});
+
+describe("cittyAnswers", () => {
+  it("matches the tokens citty's runMain answers before parsing", () => {
+    expect(cittyAnswers(["hello", "-h"])).toBe(true);
+    expect(cittyAnswers(["-_8", "--help"])).toBe(true);
+    expect(cittyAnswers(["-v"])).toBe(true);
+    expect(cittyAnswers(["--version", "hello"])).toBe(false);
+    expect(cittyAnswers(["hello", "--help=x"])).toBe(false);
   });
 });
 
