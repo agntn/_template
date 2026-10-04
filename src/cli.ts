@@ -3,7 +3,7 @@
 import { existsSync } from "node:fs";
 import { sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { shownArgument, undeclaredOption } from "./cli-args.ts";
+import { rootOptions, shownArgument, undeclaredOption } from "./cli-args.ts";
 import type McpCommand from "./commands/mcp.ts";
 import { version } from "./version.ts";
 
@@ -72,10 +72,10 @@ const rawArgs = process.argv.slice(2);
 const [name] = rawArgs;
 const sub = await Object.entries(subCommands).find(([key]) => key === name)?.[1]();
 const args = await sub?.args;
-const dashed = undeclaredOption(
-  sub ? rawArgs.slice(1) : rawArgs,
-  (typeof args === "function" ? await args() : args) ?? {},
-);
+const defs = typeof args === "function" ? await args() : args;
+const dashed = sub
+  ? undeclaredOption(rawArgs.slice(1), defs ?? {})
+  : undeclaredOption(rawArgs, rootOptions);
 if (dashed === undefined) {
   await runMain(main);
 } else {

@@ -1,18 +1,21 @@
+import { camelCase, kebabCase } from "scule";
+
 /** The fields of a citty argument that tell an option from text. */
 type Declared = Readonly<{ type?: string; alias?: string | readonly string[] }>;
+
+/** What the root command takes besides help: citty answers `--version` only there, and only alone. */
+export const rootOptions = { version: { type: "boolean", alias: "v" } } as const;
 
 /**
  * Maps every name citty takes for an option of the command to whether it takes a value.
  * @param defs - The command's argument definitions.
- * @returns {Record<string, boolean>} Names, both spellings, aliases, `no-` forms, help and version.
+ * @returns {Record<string, boolean>} Names, scule's two spellings, aliases, `no-` forms and help.
  */
 function optionNames(defs: Readonly<Record<string, Declared>>): Record<string, boolean> {
-  const names: Record<string, boolean> = { help: false, h: false, version: false, v: false };
+  const names: Record<string, boolean> = { help: false, h: false };
   for (const [key, def] of Object.entries(defs)) {
     if (def.type === "positional") continue;
-    const camel = key.replaceAll(/-(\w)/gu, (_, letter: string) => letter.toUpperCase());
-    const kebab = key.replaceAll(/[A-Z]/gu, (letter) => `-${letter.toLowerCase()}`);
-    for (const name of [key, camel, kebab, ...[def.alias ?? []].flat()]) {
+    for (const name of [key, camelCase(key), kebabCase(key), ...[def.alias ?? []].flat()]) {
       names[name] = def.type !== "boolean";
       names[`no-${name}`] = false;
     }

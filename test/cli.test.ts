@@ -61,6 +61,11 @@ describe("template-ts CLI", () => {
       stdout: "",
       stderr: `Unknown option "--nmae" for hello. ${hint}`,
     });
+    expect(run("hello", "--version")).toMatchObject({
+      code: 1,
+      stdout: "",
+      stderr: `Unknown option "--version" for hello. ${hint}`,
+    });
     expect(run("hello", "--", "-_8")).toMatchObject({ code: 0, stdout: "Hello, -_8!\n" });
   });
 });

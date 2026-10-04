@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
-import { shownArgument, undeclaredOption } from "../src/cli-args.ts";
+import { rootOptions, shownArgument, undeclaredOption } from "../src/cli-args.ts";
 
 const defs = {
   input: { type: "positional" },
   key: { type: "string", alias: "k" },
   blockSize: { type: "string" },
+  page_size: { type: "string" },
   verbose: { type: "boolean", alias: "v" },
 } as const;
 
@@ -27,9 +28,15 @@ describe("undeclaredOption", () => {
         defs,
       ),
     ).toBeUndefined();
+    expect(undeclaredOption(["--page-size", "2", "--pageSize", "3"], defs)).toBeUndefined();
     expect(undeclaredOption(["--help"], {})).toBeUndefined();
     expect(undeclaredOption(["-h"], {})).toBeUndefined();
-    expect(undeclaredOption(["--version"], {})).toBeUndefined();
+  });
+
+  it("takes --version only where citty answers it, on the root command", () => {
+    expect(undeclaredOption(["--version"], rootOptions)).toBeUndefined();
+    expect(undeclaredOption(["-v"], rootOptions)).toBeUndefined();
+    expect(undeclaredOption(["--version"], {})).toBe("--version");
   });
 
   it("gives a dashed value to the option that takes it", () => {
