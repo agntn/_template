@@ -17,17 +17,13 @@ export function lastSourceChange(directory: string): number {
 }
 
 /**
- * Snapshots `directory` now and returns a check that throws once anything under it changed. A
- * server running `src/` keeps its loaded modules cached, so a lazy import of a pulled file meets
- * old exports and fails with an error that points nowhere near the cause.
+ * Snapshots `directory` now and tells later whether anything under it changed. A server running
+ * `src/` keeps its loaded modules cached, so a lazy import of a pulled file meets old exports and
+ * fails with an error that points nowhere near the cause.
  * @param directory - The source tree the server loads from.
- * @returns {() => void} The check to run before each tool call.
+ * @returns {() => boolean} Whether the tree changed since the snapshot.
  */
-export function sourceChangeGuard(directory: string): () => void {
+export function sourceChangeCheck(directory: string): () => boolean {
   const loaded = lastSourceChange(directory);
-  return () => {
-    if (lastSourceChange(directory) !== loaded) {
-      throw new Error("src/ changed under this server, restart it to load the new code");
-    }
-  };
+  return () => lastSourceChange(directory) !== loaded;
 }

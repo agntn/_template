@@ -218,20 +218,24 @@ describe.skipIf(!existsSync(join(root, "dist/cli.mjs")))(
           ),
         );
 
-        const response = await client.callTool({
-          name: "template_paths",
-          arguments: { appName: "vitest-app" },
-        });
-
-        expect(response).toMatchObject({
+        const refused = {
           isError: true,
           content: [
             {
               type: "text",
-              text: "template_paths failed: src/ changed under this server, restart it to load the new code",
+              text: "src/ changed under this server, restart it to load the new code",
             },
           ],
-        });
+        };
+
+        /** A tool or a schema the pull brought in is news to the old server too. */
+        for (const [name, args] of [
+          ["template_paths", { appName: "vitest-app" }],
+          ["template_paths", { appNam: "vitest-app" }],
+          ["template_added", {}],
+        ] as const) {
+          expect(await client.callTool({ name, arguments: args })).toMatchObject(refused);
+        }
       } finally {
         await client.close();
         rmSync(checkout, { recursive: true, force: true });

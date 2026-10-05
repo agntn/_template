@@ -1,27 +1,44 @@
-import type { ToolDefinition } from "@agntn/tools";
-import { createMcpServer as createToolServer } from "@agntn/tools/mcp";
+import { indexTools, invokeTool, ToolInputError } from "@agntn/tools";
+import { createMcpServer as createToolServer, errorResult } from "@agntn/tools/mcp";
 import type { Server } from "@modelcontextprotocol/server";
-import { sourceChangeGuard } from "./source-change.ts";
+import { sourceChangeCheck } from "./source-change.ts";
 import { templateTools } from "./tools.ts";
 import { version } from "./version.ts";
 
 /**
- * Creates an unconnected MCP server exposing the template tools. Run from `src/`, it refuses calls
- * once that tree changes, since the bundle can't mix versions and the source can.
+ * Creates an unconnected MCP server exposing the template tools. Run from `src/`, it answers every
+ * call with a restart line once that tree changes, ahead of the name and schema checks, since a
+ * pulled tool or schema would otherwise get a stale refusal.
  *
  * @returns {Server} Unconnected MCP server.
  */
 export function createMcpServer(): Server {
-  if (!import.meta.url.endsWith(".ts")) {
-    return createToolServer({ name: "template-ts", version }, templateTools);
-  }
-  const check = sourceChangeGuard(import.meta.dirname);
-  const tools = templateTools.map((tool): ToolDefinition => ({
-    ...tool,
-    execute: (input, context) => {
-      check();
-      return tool.execute(input, context);
-    },
-  }));
-  return createToolServer({ name: "template-ts", version }, tools);
+  const server = createToolServer({ name: "template-ts", version }, templateTools);
+  if (!import.meta.url.endsWith(".ts")) return server;
+
+  const changed = sourceChangeCheck(import.meta.dirname);
+  const byName = indexTools(templateTools);
+  server.setRequestHandler("tools/call", async (request, ctx) => {
+    if (changed()) {
+      return errorResult("src/ changed under this server, restart it to load the new code");
+    }
+    const tool = byName.get(request.params.name);
+    if (!tool)
+      return errorResult(`Unknown template-ts tool: ${JSON.stringify(request.params.name)}`);
+    try {
+      const result = await invokeTool(tool, request.params.arguments ?? {}, {
+        signal: ctx.mcpReq.signal,
+      });
+      return {
+        content: result.content,
+        ...(result.isError === undefined ? {} : { isError: result.isError }),
+      };
+    } catch (error) {
+      if (error instanceof ToolInputError) return errorResult(...error.lines);
+      return errorResult(
+        `${tool.name} failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  });
+  return server;
 }
