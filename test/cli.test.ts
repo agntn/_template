@@ -150,6 +150,41 @@ function served(from: "bundle" | "source") {
   return { code: 0, from, name: "template-ts" };
 }
 
+const refused = {
+  isError: true,
+  content: [
+    { type: "text", text: "src/ changed under this server, restart it to load the new code" },
+  ],
+};
+
+/**
+ * Starts `mcp` from the built bin of a checkout copy and connects a client to it.
+ * @param patch - Rewrites `src/tool-operations.ts` before the server starts.
+ * @param reuse - A copy made by an earlier call, served again as it stands.
+ * @returns {Promise<{ checkout: string, client: Client }>} The copy and the connected client.
+ */
+async function checkoutServer(patch?: (operations: string) => string, reuse?: string) {
+  const checkout = reuse ?? mkdtempSync(join(tmpdir(), "template-ts-cli-"));
+  if (reuse === undefined) {
+    for (const entry of ["dist", "src", "package.json"]) {
+      cpSync(join(root, entry), join(checkout, entry), { recursive: true });
+    }
+    symlinkSync(join(root, "node_modules"), join(checkout, "node_modules"), "dir");
+  }
+  const operations = join(checkout, "src/tool-operations.ts");
+  if (patch) writeFileSync(operations, patch(readFileSync(operations, "utf8")));
+  const client = new Client({ name: "template-test", version: "1.0.0" });
+  await client.connect(
+    new StdioClientTransport({
+      command: process.execPath,
+      args: [join(checkout, "dist/cli.mjs"), "mcp"],
+      env,
+      stderr: "ignore",
+    }),
+  );
+  return { checkout, client };
+}
+
 describe.skipIf(!existsSync(join(root, "dist/cli.mjs")))(
   "template-ts mcp from the built bin",
   () => {
@@ -190,21 +225,8 @@ describe.skipIf(!existsSync(join(root, "dist/cli.mjs")))(
     });
 
     it("refuses a call after a pull instead of mixing old and new modules", async () => {
-      const checkout = mkdtempSync(join(tmpdir(), "template-ts-cli-"));
-      const client = new Client({ name: "template-test", version: "1.0.0" });
+      const { checkout, client } = await checkoutServer();
       try {
-        for (const entry of ["dist", "src", "package.json"]) {
-          cpSync(join(root, entry), join(checkout, entry), { recursive: true });
-        }
-        symlinkSync(join(root, "node_modules"), join(checkout, "node_modules"), "dir");
-        await client.connect(
-          new StdioClientTransport({
-            command: process.execPath,
-            args: [join(checkout, "dist/cli.mjs"), "mcp"],
-            env,
-            stderr: "ignore",
-          }),
-        );
         await client.listTools();
         /** The incident in keys: a loaded module gains an export, a lazy one starts importing it. */
         const contract = join(checkout, "src/tool-contract.ts");
@@ -218,16 +240,6 @@ describe.skipIf(!existsSync(join(root, "dist/cli.mjs")))(
           ),
         );
 
-        const refused = {
-          isError: true,
-          content: [
-            {
-              type: "text",
-              text: "src/ changed under this server, restart it to load the new code",
-            },
-          ],
-        };
-
         /** A tool or a schema the pull brought in is news to the old server too. */
         for (const [name, args] of [
           ["template_paths", { appName: "vitest-app" }],
@@ -235,6 +247,41 @@ describe.skipIf(!existsSync(join(root, "dist/cli.mjs")))(
           ["template_added", {}],
         ] as const) {
           expect(await client.callTool({ name, arguments: args })).toMatchObject(refused);
+        }
+      } finally {
+        await client.close();
+        rmSync(checkout, { recursive: true, force: true });
+      }
+    });
+
+    it("blames a pull that lands mid-call for the failure, not the tool", async () => {
+      /** The executor writes into `src/` on every call, and the app name `fails` makes it throw. */
+      const { checkout, client } = await checkoutServer(
+        (operations) =>
+          `import { writeFileSync } from "node:fs";\n${operations.replace(
+            "  const paths = resolveAppPaths(appName);",
+            `  writeFileSync(new URL(\`./pulled-\${appName}.ts\`, import.meta.url), "export {};\\n");
+  if (appName === "fails") throw new Error("boom");
+  const paths = resolveAppPaths(appName);`,
+          )}`,
+      );
+      try {
+        const kept = await client.callTool({
+          name: "template_paths",
+          arguments: { appName: "kept" },
+        });
+        expect(kept.isError).not.toBe(true);
+
+        const fresh = await checkoutServer(undefined, checkout);
+        try {
+          expect(
+            await fresh.client.callTool({
+              name: "template_paths",
+              arguments: { appName: "fails" },
+            }),
+          ).toMatchObject(refused);
+        } finally {
+          await fresh.client.close();
         }
       } finally {
         await client.close();

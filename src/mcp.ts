@@ -5,10 +5,12 @@ import { sourceChangeCheck } from "./source-change.ts";
 import { templateTools } from "./tools.ts";
 import { version } from "./version.ts";
 
+const restart = "src/ changed under this server, restart it to load the new code";
+
 /**
- * Creates an unconnected MCP server exposing the template tools. Run from `src/`, it answers every
- * call with a restart line once that tree changes, ahead of the name and schema checks, since a
- * pulled tool or schema would otherwise get a stale refusal.
+ * Creates an unconnected MCP server exposing the template tools. Run from `src/`, it answers a call
+ * with a restart line once that tree changed, checked before the name and the schema and again when
+ * the tool fails. A call that succeeds while a pull lands keeps its answer; the next one refuses.
  *
  * @returns {Server} Unconnected MCP server.
  */
@@ -19,9 +21,7 @@ export function createMcpServer(): Server {
   const changed = sourceChangeCheck(import.meta.dirname);
   const byName = indexTools(templateTools);
   server.setRequestHandler("tools/call", async (request, ctx) => {
-    if (changed()) {
-      return errorResult("src/ changed under this server, restart it to load the new code");
-    }
+    if (changed()) return errorResult(restart);
     const tool = byName.get(request.params.name);
     if (!tool)
       return errorResult(`Unknown template-ts tool: ${JSON.stringify(request.params.name)}`);
@@ -34,6 +34,7 @@ export function createMcpServer(): Server {
         ...(result.isError === undefined ? {} : { isError: result.isError }),
       };
     } catch (error) {
+      if (changed()) return errorResult(restart);
       if (error instanceof ToolInputError) return errorResult(...error.lines);
       return errorResult(
         `${tool.name} failed: ${error instanceof Error ? error.message : String(error)}`,
