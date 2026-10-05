@@ -61,6 +61,13 @@ describe("sourceChangeCheck", () => {
     expect(changed()).toBe(true);
   });
 
+  it("turns true when the whole tree goes away instead of throwing", async () => {
+    const { changed, tree } = guarded();
+    rmSync(tree, { recursive: true, force: true });
+
+    expect(changed()).toBe(true);
+  });
+
   it("turns true once a file comes in", async () => {
     const { changed, tree } = guarded();
     await later();

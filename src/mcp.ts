@@ -7,6 +7,11 @@ import { version } from "./version.ts";
 
 const restart = "src/ changed under this server, restart it to load the new code";
 
+/** Taken as `src/` loads, so a server built later can't adopt a pull its cached modules missed. */
+const changed = import.meta.url.endsWith(".ts")
+  ? sourceChangeCheck(import.meta.dirname)
+  : undefined;
+
 /**
  * Creates an unconnected MCP server exposing the template tools. Run from `src/`, it answers a call
  * with a restart line once that tree changed, checked before the name and the schema and again when
@@ -16,9 +21,8 @@ const restart = "src/ changed under this server, restart it to load the new code
  */
 export function createMcpServer(): Server {
   const server = createToolServer({ name: "template-ts", version }, templateTools);
-  if (!import.meta.url.endsWith(".ts")) return server;
+  if (!changed) return server;
 
-  const changed = sourceChangeCheck(import.meta.dirname);
   const byName = indexTools(templateTools);
   server.setRequestHandler("tools/call", async (request, ctx) => {
     if (changed()) return errorResult(restart);
