@@ -7,10 +7,13 @@ import {
   readFileSync,
   rmSync,
   symlinkSync,
+  writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { Client } from "@modelcontextprotocol/client";
+import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import { describe, expect, it } from "vite-plus/test";
 
 const switches = new Set([
@@ -183,6 +186,55 @@ describe.skipIf(!existsSync(join(root, "dist/cli.mjs")))(
         expect(serve(packaged)).toMatchObject(served("bundle"));
       } finally {
         rmSync(packaged, { recursive: true, force: true });
+      }
+    });
+
+    it("refuses a call after a pull instead of mixing old and new modules", async () => {
+      const checkout = mkdtempSync(join(tmpdir(), "template-ts-cli-"));
+      const client = new Client({ name: "template-test", version: "1.0.0" });
+      try {
+        for (const entry of ["dist", "src", "package.json"]) {
+          cpSync(join(root, entry), join(checkout, entry), { recursive: true });
+        }
+        symlinkSync(join(root, "node_modules"), join(checkout, "node_modules"), "dir");
+        await client.connect(
+          new StdioClientTransport({
+            command: process.execPath,
+            args: [join(checkout, "dist/cli.mjs"), "mcp"],
+            env,
+            stderr: "ignore",
+          }),
+        );
+        await client.listTools();
+        /** The incident in keys: a loaded module gains an export, a lazy one starts importing it. */
+        const contract = join(checkout, "src/tool-contract.ts");
+        const operations = join(checkout, "src/tool-operations.ts");
+        writeFileSync(contract, `${readFileSync(contract, "utf8")}export const ADDED = 1;\n`);
+        writeFileSync(
+          operations,
+          readFileSync(operations, "utf8").replace(
+            "APP_NAME_PATTERN }",
+            "APP_NAME_PATTERN, ADDED }",
+          ),
+        );
+
+        const response = await client.callTool({
+          name: "template_paths",
+          arguments: { appName: "vitest-app" },
+        });
+
+        expect(response).toMatchObject({
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: "template_paths failed: src/ changed under this server, restart it to load the new code",
+            },
+          ],
+        });
+      } finally {
+        await client.close();
+        rmSync(checkout, { recursive: true, force: true });
       }
     });
   },
