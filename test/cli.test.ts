@@ -38,40 +38,61 @@ function run(...args: readonly string[]) {
 }
 
 describe("template-ts CLI", () => {
-  it("prints the usage and citty's errors without colors into a pipe", () => {
+  it("prints the usage and its errors without colors into a pipe", () => {
     const help = run("--help");
     const usage = run("hello", "--help");
     const unknown = run("nope");
 
-    expect(help.stdout).toContain("USAGE template-ts hello|mcp");
-    expect(usage.stdout).toContain("NAME    Name to greet");
-    expect(unknown).toMatchObject({ code: 1, stderr: "Unknown command nope\n" });
+    expect(help.stdout).toContain("USAGE template-ts <command> [OPTIONS]");
+    expect(help.stdout).toMatch(/^ {2}paths {2}Config, data and cache/m);
+    expect(usage.stdout).toContain("NAME  Name to greet");
+    expect(unknown).toMatchObject({
+      code: 1,
+      stderr: 'Unknown command "nope"\nRun template-ts --help for the commands\n',
+    });
     for (const output of [help, usage, unknown]) {
       expect(output.stdout + output.stderr).not.toContain("\u001B");
     }
   });
 
-  it("refuses an unknown dashed argument in one line instead of a citty stack trace", () => {
-    const hint = "Text that starts with - goes after --, which ends the options.\n";
+  it("runs the paths tool and the CLI-only hello", () => {
+    expect(run("paths", "my-app", "--json")).toMatchObject({ code: 0, stderr: "" });
+    expect(JSON.parse(run("paths", "my-app", "--json").stdout)).toHaveProperty("config");
+    expect(run("paths", "my.app")).toMatchObject({
+      code: 1,
+      stdout: "",
+      stderr: 'Invalid arguments at /appName: must match pattern "^[A-Za-z0-9][A-Za-z0-9_-]*$"\n',
+    });
+    expect(run("hello")).toMatchObject({ code: 0, stdout: "Hello, world!\n" });
+    expect(run("hello", "Ori")).toMatchObject({ code: 0, stdout: "Hello, Ori!\n" });
+  });
+
+  it("refuses an option the command doesn't take in one line", () => {
+    const takes = "takes --json";
 
     expect(run("-_8")).toMatchObject({
       code: 1,
       stdout: "",
-      stderr: `Unknown option "-_8". ${hint}`,
+      stderr: 'Unknown command "-_8"\nRun template-ts --help for the commands\n',
     });
     expect(run("hello", "--nmae", "x")).toMatchObject({
       code: 1,
       stdout: "",
-      stderr: `Unknown option "--nmae" for hello. ${hint}`,
+      stderr: `Invalid arguments: unknown option "--nmae"; ${takes}\n`,
     });
     expect(run("hello", "--version")).toMatchObject({
       code: 1,
       stdout: "",
-      stderr: `Unknown option "--version" for hello. ${hint}`,
+      stderr: `Invalid arguments: unknown option "--version"; ${takes}\n`,
     });
     expect(run("hello", "-hh")).toMatchObject({
       code: 1,
-      stderr: `Unknown option "-hh" for hello. ${hint}`,
+      stderr: `Invalid arguments: unknown option "-hh"; ${takes}\n`,
+    });
+    expect(run("mcp", "--stdio")).toMatchObject({
+      code: 1,
+      stdout: "",
+      stderr: 'Invalid arguments: unknown option "--stdio"; takes no options\n',
     });
     expect(run("--version")).toMatchObject({ code: 0, stdout: "0.0.0\n" });
     expect(run("hello", "--", "-_8")).toMatchObject({ code: 0, stdout: "Hello, -_8!\n" });
@@ -133,10 +154,10 @@ function serve(base: string, extraEnv: Readonly<Record<string, string>> = {}) {
   const { status, stderr, stdout } = child;
   const urls = Array.isArray(loaded) ? loaded.filter((url) => typeof url === "string") : [];
   const source = urls.includes(pathToFileURL(join(base, "src/mcp.ts")).href);
-  const bundle = urls.includes(pathToFileURL(join(base, "dist/_chunks/mcp.mjs")).href);
+  const bundle = urls.some((url) => url.endsWith("/node_modules/@agntn/tools/dist/mcp.mjs"));
   let from: "bundle" | "source" | "unknown" = "unknown";
-  if (source && !bundle) from = "source";
-  if (bundle && !source) from = "bundle";
+  if (source) from = "source";
+  else if (bundle) from = "bundle";
   const name = /"serverInfo":\{"name":"([^"]+)"/.exec(stdout)?.[1];
   return { code: status, from, name, stderr };
 }
