@@ -62,7 +62,7 @@
     "@earendil-works/pi-coding-agent": "1.0.2",
     "@modelcontextprotocol/client": "2.2.0",
     "@oh-my-pi/pi-coding-agent": "18.0.0",
-    "@types/node": "26.2.0",
+    "@types/node": "26.6.4",
     "ai": "7.0.66",
     "changelogen": "0.6.2",
     "obuild": "0.4.43",
