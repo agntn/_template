@@ -31,6 +31,7 @@ export const pathsTool = defineTool({
     "The tool respects platform conventions, XDG variables, and app-specific directory overrides.",
   ],
   effect: "read",
+  cli: { description: "Config, data and cache directories for an app", positional: ["appName"] },
   input: Type.Object(
     {
       appName: Type.String({
