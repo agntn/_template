@@ -1,3 +1,5 @@
+// `pnpm typecheck` runs this after the build: the tests import the extensions and their `dist` types.
+// Vitest only strips types, so nothing else checks `test/`.
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
