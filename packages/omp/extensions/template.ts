@@ -46,6 +46,7 @@ export default async function templateExtension(pi: ExtensionAPI): Promise<void>
   pi.setLabel("Template");
   const { templateTools } = await loadTools();
   registerOmpTools(pi, templateTools, {
+    // Compiled OMP injects no `/tui`, so the extension imports nothing from the host at runtime.
     Text: pi.pi.Text,
     renderers: {
       template_paths: {

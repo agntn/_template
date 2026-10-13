@@ -8,6 +8,8 @@ on:
   push:
     tags:
       - "v*"
+  # Retry a failed publish by dispatching this workflow with the tag, not by rerunning the run:
+  # a rerun takes this file from the tag's commit, so a fix merged since never reaches it.
   workflow_dispatch:
     inputs:
       tag:
