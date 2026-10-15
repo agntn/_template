@@ -7,9 +7,7 @@ import { APP_NAME_MAX_LENGTH, APP_NAME_PATTERN } from "../src/tool-contract.ts";
 import { pathsTool } from "../src/tools.ts";
 import { loadPiExtension } from "./fixtures/pi-host.ts";
 
-const extensionPath = fileURLToPath(
-  new URL("../packages/pi/extensions/template.ts", import.meta.url),
-);
+const extensionPath = fileURLToPath(new URL("../extensions/pi/template.ts", import.meta.url));
 
 describe("pi template extension", () => {
   it("registers template_paths and nothing else", async () => {
