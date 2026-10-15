@@ -7,7 +7,7 @@ vi.mock("@oh-my-pi/pi-coding-agent/tui", () => {
   throw new Error("The OMP host does not inject the TUI barrel");
 });
 
-import templateExtension from "../packages/omp/extensions/template.ts";
+import templateExtension from "../extensions/omp/template.ts";
 import { APP_NAME_MAX_LENGTH, APP_NAME_PATTERN } from "../src/tool-contract.ts";
 import { pathsTool } from "../src/tools.ts";
 import {
