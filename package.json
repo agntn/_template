@@ -60,7 +60,7 @@
     "@modelcontextprotocol/client": "2.4.0",
     "@oh-my-pi/pi-coding-agent": "18.17.0",
     "@types/node": "26.6.6",
-    "ai": "7.0.163",
+    "ai": "7.0.177",
     "changelogen": "0.6.2",
     "obuild": "0.4.45",
     "typescript": "7.0.2",
